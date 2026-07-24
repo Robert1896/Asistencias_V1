@@ -1,0 +1,193 @@
+<?php
+
+namespace App\Models;
+
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    protected $fillable = [
+        'password',
+        'nombre',
+        'apellido',
+        'nombre_completo',
+        'cedula',
+        'email',
+        'rol_id',
+        'estatus',
+        'codigo_qr_estatico',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function ($user) {
+            $user->nombre_completo = trim($user->nombre . ' ' . $user->apellido);
+        });
+    }
+
+    public function getNombreCompletoAttribute($value): string
+    {
+        return $value ?: trim($this->nombre . ' ' . $this->apellido);
+    }
+
+    public function rol()
+    {
+        return $this->belongsTo(Rol::class);
+    }
+
+    public function asistencias()
+    {
+        return $this->hasMany(Asistencia::class, 'usuario_id');
+    }
+
+    public function horarioAdministrativo()
+    {
+        return $this->hasOne(HorarioAdministrativo::class, 'usuario_id');
+    }
+
+    public function cargaAcademica()
+    {
+        return $this->hasMany(CargaAcademicaDocente::class, 'usuario_id');
+    }
+
+    public function horariosDocente()
+    {
+        return $this->belongsToMany(Horario::class, 'docente_horario')
+            ->withPivot(['tipo_actividad', 'coordinacion_id', 'salon_id', 'carga_academica_id', 'seccion'])
+            ->withTimestamps();
+    }
+
+    public function totalHorasSemanalesDocente(): float
+    {
+        return $this->horariosDocente()
+            ->get()
+            ->sum(fn($h) => $h->duracion_en_horas);
+    }
+
+    public function tienePermiso(string $codigoPermiso): bool
+    {
+        return $this->rol->permisos()->where('codigo', $codigoPermiso)->exists();
+    }
+
+    public function obtenerSesionesDelDia(string $fecha): array
+    {
+        $diaSemana = Carbon::parse($fecha)->dayOfWeekIso;
+
+        $bloques = $this->horariosDocente()
+            ->where('horarios.dia_semana', $diaSemana)
+            ->orderBy('horarios.hora_inicio')
+            ->get();
+
+        if ($bloques->isEmpty()) {
+            return [];
+        }
+
+        $sesiones = [];
+        $sesionActual = null;
+
+        foreach ($bloques as $bloque) {
+            if ($sesionActual === null) {
+                $sesionActual = [
+                    'horario_id_inicio' => $bloque->id,
+                    'hora_inicio'       => $bloque->hora_inicio,
+                    'hora_fin'          => $bloque->hora_fin,
+                    'salon_id'          => $bloque->pivot->salon_id,
+                    'bloques'           => collect([$bloque]),
+                ];
+            } else {
+                $anterior = $sesionActual['bloques']->last();
+
+                if ($anterior->hora_fin === $bloque->hora_inicio
+                    && $sesionActual['salon_id'] === $bloque->pivot->salon_id) {
+                    $sesionActual['hora_fin'] = $bloque->hora_fin;
+                    $sesionActual['bloques']->push($bloque);
+                } else {
+                    $sesiones[] = $sesionActual;
+                    $sesionActual = [
+                        'horario_id_inicio' => $bloque->id,
+                        'hora_inicio'       => $bloque->hora_inicio,
+                        'hora_fin'          => $bloque->hora_fin,
+                        'salon_id'          => $bloque->pivot->salon_id,
+                        'bloques'           => collect([$bloque]),
+                    ];
+                }
+            }
+        }
+
+        if ($sesionActual) {
+            $sesiones[] = $sesionActual;
+        }
+
+        return $sesiones;
+    }
+
+    public function obtenerSesionActiva(string $fecha, string $hora): ?array
+    {
+        $sesiones = $this->obtenerSesionesDelDia($fecha);
+
+        foreach ($sesiones as $sesion) {
+            if ($hora >= $sesion['hora_inicio'] && $hora < $sesion['hora_fin']) {
+                return $sesion;
+            }
+        }
+
+        return null;
+    }
+
+    public function obtenerBloqueActivoEnSalon(string $fecha, string $hora, int $salonId): ?array
+    {
+        $diaSemana = Carbon::parse($fecha)->dayOfWeekIso;
+
+        $bloque = $this->horariosDocente()
+            ->where('horarios.dia_semana', $diaSemana)
+            ->where('docente_horario.salon_id', $salonId)
+            ->where('horarios.hora_inicio', '<=', $hora)
+            ->where('horarios.hora_fin', '>', $hora)
+            ->first();
+
+        if (!$bloque) {
+            return null;
+        }
+
+        return [
+            'horario_id' => $bloque->id,
+            'hora_inicio' => $bloque->hora_inicio,
+            'hora_fin'    => $bloque->hora_fin,
+            'salon_id'    => $salonId,
+        ];
+    }
+
+    public function scopeActivos($query)
+    {
+        return $query->where('estatus', 'activo');
+    }
+
+    public function scopeDocentes($query)
+    {
+        return $query->where('rol_id', 3);
+    }
+
+    public function scopeAdministrativos($query)
+    {
+        return $query->where('rol_id', 2);
+    }
+}

@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+/**
+ * @property string $justificado
+ * @property string|null $texto_justificacion
+ * @property \Illuminate\Http\UploadedFile|null $archivo
+ */
+class JustificarAdminRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'justificado'         => 'required|in:Si,No',
+            'texto_justificacion' => 'nullable|string|max:500',
+            'archivo'             => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'justificado.required'         => 'El campo justificado es obligatorio.',
+            'justificado.in'               => 'El valor debe ser "Si" o "No".',
+            'texto_justificacion.max'      => 'El texto de la justificación no puede exceder 500 caracteres.',
+            'archivo.mimes'                => 'El archivo debe ser de tipo PDF, JPG, JPEG o PNG.',
+            'archivo.max'                  => 'El archivo no puede exceder 5 MB.',
+        ];
+    }
+}

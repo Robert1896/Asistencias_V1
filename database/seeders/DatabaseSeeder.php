@@ -1,0 +1,113 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // ─── Roles ────────────────────────────────────────
+        DB::table('roles')->insertOrIgnore([
+            ['id' => 1, 'nombre' => 'Superadmin',     'descripcion' => 'Acceso total al sistema'],
+            ['id' => 2, 'nombre' => 'Administrativo', 'descripcion' => 'Personal de oficina con turno fijo'],
+            ['id' => 3, 'nombre' => 'Docente',        'descripcion' => 'Profesores con carga académica variable'],
+            ['id' => 4, 'nombre' => 'Asistente',      'descripcion' => 'Operador de la estación de chequeo'],
+        ]);
+
+        // ─── Permisos ─────────────────────────────────────
+        DB::table('permisos')->insertOrIgnore([
+            ['id' => 1,  'codigo' => 'usuarios_ver',        'nombre' => 'Ver listado de usuarios',        'modulo' => 'usuarios'],
+            ['id' => 2,  'codigo' => 'usuarios_crear',      'nombre' => 'Crear nuevos usuarios',          'modulo' => 'usuarios'],
+            ['id' => 3,  'codigo' => 'usuarios_editar',     'nombre' => 'Editar usuarios existentes',     'modulo' => 'usuarios'],
+            ['id' => 4,  'codigo' => 'usuarios_eliminar',   'nombre' => 'Eliminar usuarios',              'modulo' => 'usuarios'],
+            ['id' => 5,  'codigo' => 'roles_ver',           'nombre' => 'Ver roles',                      'modulo' => 'roles'],
+            ['id' => 6,  'codigo' => 'roles_editar',        'nombre' => 'Asignar/Quitar permisos',        'modulo' => 'roles'],
+            ['id' => 7,  'codigo' => 'horarios_ver',        'nombre' => 'Ver horarios',                   'modulo' => 'horarios'],
+            ['id' => 8,  'codigo' => 'horarios_editar',     'nombre' => 'Cargar/Editar horarios',         'modulo' => 'horarios'],
+            ['id' => 9,  'codigo' => 'estacion_operar',     'nombre' => 'Operar estación de chequeo',     'modulo' => 'estacion'],
+            ['id' => 10, 'codigo' => 'reportes_ver',        'nombre' => 'Ver reportes de productividad',  'modulo' => 'reportes'],
+            ['id' => 11, 'codigo' => 'asistencias_justificar', 'nombre' => 'Justificar inasistencias',   'modulo' => 'asistencias'],
+            ['id' => 12, 'codigo' => 'asistencias_ver',     'nombre' => 'Ver registros de asistencia',    'modulo' => 'asistencias'],
+            ['id' => 13, 'codigo' => 'asistencias_registrar', 'nombre' => 'Registrar asistencia manual', 'modulo' => 'asistencias'],
+            ['id' => 14, 'codigo' => 'salones_ver',         'nombre' => 'Ver ocupación de salones',       'modulo' => 'salones'],
+        ]);
+
+        // ─── Rol_Permiso (Solo insertar si no existen) ────
+        $existentes = DB::table('rol_permiso')->pluck('rol_id', 'permiso_id')->toArray();
+
+        $asignaciones = [
+            // Superadmin = todos
+            ...array_fill_keys(range(1, 11), 1),
+            // Administrativo: estación + horarios
+            9 => 2, 7 => 2,
+            // Docente: estación
+            9 => 3,
+            // Asistente: estación
+            9 => 4,
+        ];
+
+        // Superadmin: todos los permisos
+        foreach (range(1, 14) as $permisoId) {
+            if (!isset($existentes[$permisoId]) || $existentes[$permisoId] != 1) {
+                DB::table('rol_permiso')->insertOrIgnore([
+                    'rol_id' => 1, 'permiso_id' => $permisoId,
+                ]);
+            }
+        }
+
+        // Administrativo
+        foreach ([9, 7] as $permisoId) {
+            DB::table('rol_permiso')->insertOrIgnore([
+                'rol_id' => 2, 'permiso_id' => $permisoId,
+            ]);
+        }
+
+        // Docente
+        DB::table('rol_permiso')->insertOrIgnore([
+            'rol_id' => 3, 'permiso_id' => 9,
+        ]);
+
+        // Asistente: estación + asistencias + salones + horarios
+        foreach ([9, 12, 13, 11, 14, 7] as $permisoId) {
+            DB::table('rol_permiso')->insertOrIgnore([
+                'rol_id' => 4, 'permiso_id' => $permisoId,
+            ]);
+        }
+
+        // ─── Usuario admin (solo si no existe) ────────────
+        if (!DB::table('users')->where('email', 'admin@universidad.edu')->exists()) {
+            DB::table('users')->insert([
+                'password'           => Hash::make('Admin123!', ['rounds' => 12]),
+                'nombre_completo'    => 'Super Administrador',
+                'email'              => 'admin@universidad.edu',
+                'rol_id'             => 1,
+                'estatus'            => 'activo',
+                'codigo_qr_estatico' => Str::uuid()->toString(),
+            ]);
+        }
+
+        // ─── Departamentos (para asistencia ad-hoc) ───────
+        DB::table('departamentos')->insertOrIgnore([
+            ['nombre' => 'Departamento de Informática', 'codigo' => 'INFO'],
+        ]);
+
+        // ─── Salón virtual para asistencia especial ────────
+        if (!DB::table('salones')->where('nombre', 'Asistencia Especial')->exists()) {
+            DB::table('salones')->insert([
+                'nombre'     => 'Asistencia Especial',
+                'codigo'     => 'ADHOC-001',
+                'codigo_qr'  => Str::uuid()->toString(),
+                'capacidad'  => 0,
+                'ubicacion'  => 'Virtual',
+                'descripcion' => 'Salón virtual para asistencia en actividades fuera de horario regular (departamentos, defensas, reuniones, etc.)',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+}
