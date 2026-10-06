@@ -28,7 +28,7 @@ class QrController extends Controller
 
         return response($svg, 200, [
             'Content-Type'  => 'image/svg+xml',
-            'Cache-Control' => 'max-age=86400, public',
+            'Cache-Control' => 'private, max-age=86400',
         ]);
     }
 

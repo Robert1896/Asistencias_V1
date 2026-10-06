@@ -36,12 +36,14 @@ class SecurityHeaders
             "'self'",
             "'nonce-{$nonce}'",
             'https://cdn.jsdelivr.net',
+            'https://unpkg.com',
         ]);
 
         $styleSrc = implode(' ', [
             "'self'",
             "'nonce-{$nonce}'",
             'https://cdn.jsdelivr.net',
+            'https://fonts.bunny.net',
             "'unsafe-inline'",
         ]);
 
@@ -50,8 +52,8 @@ class SecurityHeaders
             "script-src {$scriptSrc}",
             "style-src {$styleSrc}",
             "img-src 'self' data: blob:",
-            "font-src 'self' https://cdn.jsdelivr.net data:",
-            "media-src 'self' blob:",
+            "font-src 'self' https://cdn.jsdelivr.net https://fonts.bunny.net data:",
+            "media-src 'self' blob: https://cdn.soundjay.com",
             "connect-src 'self'",
             "worker-src 'self' blob:",
             "object-src 'none'",
