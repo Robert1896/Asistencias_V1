@@ -351,6 +351,7 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
             return $this->resultado(false, 'Departamento no válido.', 'error');
         }
 
+        $salon = null;
         if ($salonId) {
             $salon = Salon::find($salonId);
         }

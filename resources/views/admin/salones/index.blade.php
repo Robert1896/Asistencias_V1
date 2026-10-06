@@ -1,8 +1,6 @@
 @php
     $user = auth()->user();
     $titulo = 'Gestión de Salones';
-    $permisoVer        = $user->tienePermiso('ver_usuarios');
-    $permisoCrearEditar = $user->tienePermiso('usuarios_crear');
 @endphp
 
 @extends('layouts.app')
@@ -18,18 +16,22 @@
             <a href="{{ route('admin.salones.ocupacion') }}" class="btn btn-outline-info btn-sm me-1">
                 <i class="bi bi-calendar3 me-1"></i>Salones Ocupados
             </a>
-            @if ($permisoCrearEditar)
+            @can('salones_eliminar')
                 <button class="btn btn-outline-danger btn-sm me-1" id="btnLimpiarHorarios" aria-label="Limpiar todos los horarios">
                     <i class="bi bi-trash me-1"></i>Limpiar Horarios
                 </button>
+            @endcan
+            @can('salones_editar')
                 <button class="btn btn-outline-success btn-sm me-1" data-bs-toggle="modal" data-bs-target="#importarModal" aria-label="Importar asignaciones de horarios">
                     <i class="bi bi-upload me-1"></i>Importar Asignaciones
                 </button>
+            @endcan
+            @can('salones_crear')
                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#salonModal"
                         data-action="crear">
                     <i class="bi bi-plus me-1"></i>Nuevo Salón
                 </button>
-            @endif
+            @endcan
         </div>
     </div>
 
@@ -153,11 +155,11 @@
                                     </button>
                                 </td>
                                 <td class="text-end">
-                                    @if ($permisoCrearEditar)
-                                        <a href="{{ route('admin.salones.ocupacion') }}?salon={{ $salon->id }}"
-                                           class="btn btn-sm btn-outline-info" title="Ver horario del salón" aria-label="Ver horario de {{ $salon->nombre }}">
-                                            <i class="bi bi-calendar3"></i>
-                                        </a>
+                                    <a href="{{ route('admin.salones.ocupacion') }}?salon={{ $salon->id }}"
+                                       class="btn btn-sm btn-outline-info" title="Ver horario del salón" aria-label="Ver horario de {{ $salon->nombre }}">
+                                        <i class="bi bi-calendar3"></i>
+                                    </a>
+                                    @can('salones_editar')
                                         <button class="btn btn-sm btn-outline-primary editar-salon"
                                                 data-id="{{ $salon->id }}"
                                                 data-nombre="{{ $salon->nombre }}"
@@ -168,7 +170,9 @@
                                                 aria-label="Editar {{ $salon->nombre }}">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        @if ($salon->asignaciones->isEmpty())
+                                    @endcan
+                                    @if ($salon->asignaciones->isEmpty())
+                                        @can('salones_eliminar')
                                             <form action="{{ route('admin.salones.destroy', $salon) }}" method="POST"
                                                   class="d-inline"
                                                   data-confirm="¿Eliminar este salón?">
@@ -177,7 +181,7 @@
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
-                                        @endif
+                                        @endcan
                                     @endif
                                 </td>
                             </tr>

@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
@@ -21,6 +22,14 @@ class DashboardController extends Controller
 
         if ($user->rol && $user->rol->nombre === 'Asistente') {
             return $this->asistente($user);
+        }
+
+        // Fase B (M12): estadísticas globales solo con permiso asistencias_ver
+        // (Gate::before da bypass al rol 1 y deniega cuentas inactivas)
+        if (!Gate::allows('asistencias_ver')) {
+            return Gate::allows('estacion_operar')
+                ? redirect()->route('estacion.index')
+                : redirect()->route('profile.edit');
         }
 
         $stats = Cache::remember('dashboard_stats', 300, function () {

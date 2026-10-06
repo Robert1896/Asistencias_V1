@@ -54,26 +54,50 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.salones.ocupacion') }}"><i class="bi bi-grid me-1"></i>Salones</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar me-1"></i>Horarios</a></li>
                     @else
-                        <li class="nav-item"><a class="nav-link" href="{{ route('estacion.index') }}"><i class="bi bi-qr-code-scan me-1"></i>Estación</a></li>
+                        @can('estacion_operar')
+                            <li class="nav-item"><a class="nav-link" href="{{ route('estacion.index') }}"><i class="bi bi-qr-code-scan me-1"></i>Estación</a></li>
+                        @endcan
                         <li class="nav-item"><a class="nav-link" href="{{ route('justificaciones') }}"><i class="bi bi-clipboard-check me-1"></i>Justificaciones</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear me-1"></i>Admin</a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><small class="dropdown-header text-uppercase">Gestión</small></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.usuarios') }}"><i class="bi bi-people me-2"></i>Usuarios</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.roles') }}"><i class="bi bi-shield me-2"></i>Roles</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar me-2"></i>Horarios Base</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week me-2"></i>Horarios Docentes</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.materias') }}"><i class="bi bi-journal-bookmark me-2"></i>Materias</a></li>
+                                @can('usuarios_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.usuarios') }}"><i class="bi bi-people me-2"></i>Usuarios</a></li>
+                                @endcan
+                                @can('roles_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.roles') }}"><i class="bi bi-shield me-2"></i>Roles</a></li>
+                                @endcan
+                                @can('horarios_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar me-2"></i>Horarios Base</a></li>
+                                @endcan
+                                @can('horarios_editar')
+                                    <li><a class="dropdown-item" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week me-2"></i>Horarios Docentes</a></li>
+                                @endcan
+                                @can('materias_editar')
+                                    <li><a class="dropdown-item" href="{{ route('admin.materias') }}"><i class="bi bi-journal-bookmark me-2"></i>Materias</a></li>
+                                @endcan
                                 <li><small class="dropdown-header text-uppercase">Espacios</small></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.salones.index') }}"><i class="bi bi-door-open me-2"></i>Salones</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.salones.ocupacion') }}"><i class="bi bi-grid me-2"></i>Ocupación Salones</a></li>
+                                @can('salones_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.salones.index') }}"><i class="bi bi-door-open me-2"></i>Salones</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.salones.ocupacion') }}"><i class="bi bi-grid me-2"></i>Ocupación Salones</a></li>
+                                @endcan
                                 <li><small class="dropdown-header text-uppercase">Sistema</small></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.feriados') }}"><i class="bi bi-calendar-event me-2"></i>Feriados</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.asistencias') }}"><i class="bi bi-calendar-check me-2"></i>Asistencias</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.reportes') }}"><i class="bi bi-bar-chart me-2"></i>Reportes</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.bitacora') }}"><i class="bi bi-journal-text me-2"></i>Bitácora</a></li>
-                                <li><a class="dropdown-item" href="{{ route('admin.correo') }}"><i class="bi bi-envelope-gear me-2"></i>Correo</a></li>
+                                @can('feriados_editar')
+                                    <li><a class="dropdown-item" href="{{ route('admin.feriados') }}"><i class="bi bi-calendar-event me-2"></i>Feriados</a></li>
+                                @endcan
+                                @can('asistencias_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.asistencias') }}"><i class="bi bi-calendar-check me-2"></i>Asistencias</a></li>
+                                @endcan
+                                @can('reportes_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.reportes') }}"><i class="bi bi-bar-chart me-2"></i>Reportes</a></li>
+                                @endcan
+                                @can('bitacora_ver')
+                                    <li><a class="dropdown-item" href="{{ route('admin.bitacora') }}"><i class="bi bi-journal-text me-2"></i>Bitácora</a></li>
+                                @endcan
+                                @can('correo_editar')
+                                    <li><a class="dropdown-item" href="{{ route('admin.correo') }}"><i class="bi bi-envelope-gear me-2"></i>Correo</a></li>
+                                @endcan
                                 <li><hr class="dropdown-divider"></li>
                                 <li><small class="dropdown-header text-uppercase">Cuenta</small></li>
                                 <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-pencil-square me-2"></i>Mi Perfil</a></li>
@@ -126,23 +150,47 @@
                     <a class="offcanvas-nav-link" href="{{ route('admin.salones.ocupacion') }}"><i class="bi bi-grid"></i>Salones</a>
                     <a class="offcanvas-nav-link" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar"></i>Horarios</a>
                 @else
-                    <a class="offcanvas-nav-link" href="{{ route('estacion.index') }}"><i class="bi bi-qr-code-scan"></i>Estación</a>
+                    @can('estacion_operar')
+                        <a class="offcanvas-nav-link" href="{{ route('estacion.index') }}"><i class="bi bi-qr-code-scan"></i>Estación</a>
+                    @endcan
                     <a class="offcanvas-nav-link" href="{{ route('justificaciones') }}"><i class="bi bi-clipboard-check"></i>Justificaciones</a>
                     <div class="offcanvas-nav-divider"><small>Gestión</small></div>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.usuarios') }}"><i class="bi bi-people"></i>Usuarios</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.roles') }}"><i class="bi bi-shield"></i>Roles</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar"></i>Horarios Base</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week"></i>Horarios Docentes</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.materias') }}"><i class="bi bi-journal-bookmark"></i>Materias</a>
+                    @can('usuarios_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.usuarios') }}"><i class="bi bi-people"></i>Usuarios</a>
+                    @endcan
+                    @can('roles_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.roles') }}"><i class="bi bi-shield"></i>Roles</a>
+                    @endcan
+                    @can('horarios_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar"></i>Horarios Base</a>
+                    @endcan
+                    @can('horarios_editar')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week"></i>Horarios Docentes</a>
+                    @endcan
+                    @can('materias_editar')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.materias') }}"><i class="bi bi-journal-bookmark"></i>Materias</a>
+                    @endcan
                     <div class="offcanvas-nav-divider"><small>Espacios</small></div>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.salones.index') }}"><i class="bi bi-door-open"></i>Salones</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.salones.ocupacion') }}"><i class="bi bi-grid"></i>Ocupación Salones</a>
+                    @can('salones_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.salones.index') }}"><i class="bi bi-door-open"></i>Salones</a>
+                        <a class="offcanvas-nav-link" href="{{ route('admin.salones.ocupacion') }}"><i class="bi bi-grid"></i>Ocupación Salones</a>
+                    @endcan
                     <div class="offcanvas-nav-divider"><small>Sistema</small></div>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.feriados') }}"><i class="bi bi-calendar-event"></i>Feriados</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.asistencias') }}"><i class="bi bi-calendar-check"></i>Asistencias</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.reportes') }}"><i class="bi bi-bar-chart"></i>Reportes</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.bitacora') }}"><i class="bi bi-journal-text"></i>Bitácora</a>
-                    <a class="offcanvas-nav-link" href="{{ route('admin.correo') }}"><i class="bi bi-envelope-gear"></i>Correo</a>
+                    @can('feriados_editar')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.feriados') }}"><i class="bi bi-calendar-event"></i>Feriados</a>
+                    @endcan
+                    @can('asistencias_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.asistencias') }}"><i class="bi bi-calendar-check"></i>Asistencias</a>
+                    @endcan
+                    @can('reportes_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.reportes') }}"><i class="bi bi-bar-chart"></i>Reportes</a>
+                    @endcan
+                    @can('bitacora_ver')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.bitacora') }}"><i class="bi bi-journal-text"></i>Bitácora</a>
+                    @endcan
+                    @can('correo_editar')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.correo') }}"><i class="bi bi-envelope-gear"></i>Correo</a>
+                    @endcan
                 @endif
             </nav>
             <div class="offcanvas-user-box mt-auto">

@@ -29,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
             if (!$user) {
                 return null;
             }
+            // Cuenta desactivada: sin autorización en ninguna parte (Fase B)
+            if ($user->estatus !== 'activo') {
+                return false;
+            }
             if ($user->rol_id === 1) {
                 return true;
             }

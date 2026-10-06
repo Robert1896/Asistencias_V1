@@ -264,6 +264,17 @@ class EstacionController extends Controller
         ]);
 
         $usuario = User::with('rol')->findOrFail($request->user_id);
+
+        // Fase B: asistencia ad-hoc solo aplica a roles Administrativo o Docente
+        // (nunca Superadmin ni Asistente, para no auto-registrarse desde la estación)
+        if (!in_array((int) $usuario->rol_id, [2, 3], true)) {
+            return response()->json([
+                'ok'      => false,
+                'tipo'    => 'error',
+                'mensaje' => 'La asistencia ad-hoc solo aplica a roles Administrativo o Docente.',
+            ], 422);
+        }
+
         $ip = $request->ip();
 
         $resultado = $this->attendanceService->procesarDocenteAdHoc(

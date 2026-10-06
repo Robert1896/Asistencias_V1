@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(W3cCompliance::class);
         $middleware->web(append: [
             DocenteSessionTimeout::class,
+            \App\Http\Middleware\VerificarEstatusActivo::class,
         ]);
         $middleware->alias([
             'no-cache' => NoCacheHeaders::class,

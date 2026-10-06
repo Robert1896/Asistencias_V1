@@ -74,6 +74,7 @@
 <small class="text-muted fw-bold text-uppercase mb-2 d-block acciones-label" style="font-size:0.62rem;letter-spacing:1px;">Acciones</small>
 
 <div class="row g-3">
+    @can('estacion_operar')
     <div class="col-6 col-md-3">
         <a href="{{ route('estacion.index') }}" class="text-decoration-none">
             <div class="card nav-btn grad-escanear h-100">
@@ -85,6 +86,8 @@
             </div>
         </a>
     </div>
+    @endcan
+    @can('asistencias_ver')
     <div class="col-6 col-md-3">
         <a href="{{ route('admin.asistencias') }}" class="text-decoration-none">
             <div class="card nav-btn grad-qr h-100">
@@ -96,6 +99,8 @@
             </div>
         </a>
     </div>
+    @endcan
+    @can('usuarios_ver')
     <div class="col-6 col-md-3">
         <a href="{{ route('admin.usuarios') }}" class="text-decoration-none">
             <div class="card nav-btn grad-stats h-100">
@@ -107,6 +112,8 @@
             </div>
         </a>
     </div>
+    @endcan
+    @can('reportes_ver')
     <div class="col-6 col-md-3">
         <a href="{{ route('admin.reportes') }}" class="text-decoration-none">
             <div class="card nav-btn grad-justificar h-100">
@@ -118,6 +125,8 @@
             </div>
         </a>
     </div>
+    @endcan
+    @can('horarios_editar')
     <div class="col-6 col-md-3">
         <a href="{{ route('admin.docentes.horarios') }}" class="text-decoration-none">
             <div class="card nav-btn grad-horario h-100">
@@ -129,6 +138,8 @@
             </div>
         </a>
     </div>
+    @endcan
+    @can('roles_ver')
     <div class="col-6 col-md-3">
         <a href="{{ route('admin.roles') }}" class="text-decoration-none">
             <div class="card nav-btn grad-perfil h-100">
@@ -140,6 +151,8 @@
             </div>
         </a>
     </div>
+    @endcan
+    @can('salones_ver')
     <div class="col-6 col-md-3">
         <a href="{{ route('admin.salones.index') }}" class="text-decoration-none">
             <div class="card nav-btn grad-escanear h-100">
@@ -151,6 +164,7 @@
             </div>
         </a>
     </div>
+    @endcan
     <div class="col-6 col-md-3">
         <a href="{{ route('qr.dinamico.page') }}" class="text-decoration-none">
             <div class="card nav-btn grad-qr h-100">

@@ -35,28 +35,21 @@ class DatabaseSeeder extends Seeder
             ['id' => 12, 'codigo' => 'asistencias_ver',     'nombre' => 'Ver registros de asistencia',    'modulo' => 'asistencias'],
             ['id' => 13, 'codigo' => 'asistencias_registrar', 'nombre' => 'Registrar asistencia manual', 'modulo' => 'asistencias'],
             ['id' => 14, 'codigo' => 'salones_ver',         'nombre' => 'Ver ocupación de salones',       'modulo' => 'salones'],
+            ['id' => 15, 'codigo' => 'salones_crear',       'nombre' => 'Crear salones',                  'modulo' => 'salones'],
+            ['id' => 16, 'codigo' => 'salones_editar',      'nombre' => 'Editar salones',                 'modulo' => 'salones'],
+            ['id' => 17, 'codigo' => 'salones_eliminar',    'nombre' => 'Eliminar salones',               'modulo' => 'salones'],
+            ['id' => 18, 'codigo' => 'bitacora_ver',        'nombre' => 'Ver bitácora',                   'modulo' => 'bitacora'],
+            ['id' => 19, 'codigo' => 'correo_editar',       'nombre' => 'Configurar correo SMTP',         'modulo' => 'correo'],
+            ['id' => 20, 'codigo' => 'feriados_editar',     'nombre' => 'Gestionar días feriados',        'modulo' => 'feriados'],
+            ['id' => 21, 'codigo' => 'materias_editar',     'nombre' => 'Gestionar materias',             'modulo' => 'materias'],
         ]);
 
-        // ─── Rol_Permiso (Solo insertar si no existen) ────
-        $existentes = DB::table('rol_permiso')->pluck('rol_id', 'permiso_id')->toArray();
-
-        $asignaciones = [
-            // Superadmin = todos
-            ...array_fill_keys(range(1, 11), 1),
-            // Administrativo: estación + horarios
-            9 => 2, 7 => 2,
-
-            // Asistente: estación
-            9 => 4,
-        ];
-
-        // Superadmin: todos los permisos
-        foreach (range(1, 14) as $permisoId) {
-            if (!isset($existentes[$permisoId]) || $existentes[$permisoId] != 1) {
-                DB::table('rol_permiso')->insertOrIgnore([
-                    'rol_id' => 1, 'permiso_id' => $permisoId,
-                ]);
-            }
+        // ─── Rol_Permiso ───────────────────────────────
+        // Superadmin: TODOS los permisos (incluye los nuevos de la Fase B)
+        foreach (DB::table('permisos')->pluck('id') as $permisoId) {
+            DB::table('rol_permiso')->insertOrIgnore([
+                'rol_id' => 1, 'permiso_id' => $permisoId,
+            ]);
         }
 
         // Administrativo
@@ -79,6 +72,8 @@ class DatabaseSeeder extends Seeder
 
             DB::table('users')->insert([
                 'password'           => Hash::make($passwordAdmin, ['rounds' => 12]),
+                'nombre'             => 'Super',
+                'apellido'           => 'Administrador',
                 'nombre_completo'    => 'Super Administrador',
                 'email'              => 'admin@universidad.edu',
                 'rol_id'             => 1,
