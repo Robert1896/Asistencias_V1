@@ -16,7 +16,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2"></i>Registro Manual de Asistencia</h4>
         <a href="{{ route('estacion.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i>Volver a Estación
+            <i class="bi bi-arrow-left me-1"></i>Volver a Estación
         </a>
     </div>
 
@@ -92,7 +92,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function() {
     const inputBusqueda = document.getElementById('busqueda');
     const resultadosDiv = document.getElementById('resultadosBusqueda');

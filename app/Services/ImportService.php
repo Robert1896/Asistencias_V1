@@ -16,19 +16,42 @@ use Illuminate\Support\Str;
 
 class ImportService
 {
-    private static function generarPasswordSegura(int $length = 12): string
+    /**
+     * Genera una contraseña aleatoria criptográficamente segura.
+     *
+     * Garantiza al menos una minúscula, una mayúscula, un número y un símbolo,
+     * y rellena el resto usando random_int() (CSPRNG). El orden se baraja con
+     * Fisher-Yates usando entropía criptográfica para no filtrar el patrón.
+     */
+    private static function generarPasswordSegura(int $length = 16): string
     {
+        $length = max($length, 12);
+
         $min = 'abcdefghijkmnpqrstuvwxyz';
         $may = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         $num = '23456789';
-        $pw  = $min[random_int(0, strlen($min) - 1)]
-             . $may[random_int(0, strlen($may) - 1)]
-             . $num[random_int(0, strlen($num) - 1)];
-        $all = $min . $may . $num;
-        for ($i = 3; $i < $length; $i++) {
-            $pw .= $all[random_int(0, strlen($all) - 1)];
+        $sim = '!@#$%&*-_=+?';
+
+        $pw = [
+            $min[random_int(0, strlen($min) - 1)],
+            $may[random_int(0, strlen($may) - 1)],
+            $num[random_int(0, strlen($num) - 1)],
+            $sim[random_int(0, strlen($sim) - 1)],
+        ];
+
+        $all = $min . $may . $num . $sim;
+        $max = strlen($all) - 1;
+
+        for ($i = count($pw); $i < $length; $i++) {
+            $pw[] = $all[random_int(0, $max)];
         }
-        return str_shuffle($pw);
+
+        for ($i = count($pw) - 1; $i > 0; $i--) {
+            $j = random_int(0, $i);
+            [$pw[$i], $pw[$j]] = [$pw[$j], $pw[$i]];
+        }
+
+        return implode('', $pw);
     }
     /**
      * Normaliza un valor de hora a formato HH:MM:SS.
@@ -154,7 +177,6 @@ class ImportService
             $email     = trim($row[$emailIdx] ?? '');
             $cedula    = trim($row[$cedulaIdx] ?? '') ?: null;
             $rolNombre = trim($row[$rolIdx] ?? 'Docente');
-            $password  = trim($row[$passwordIdx] ?? '') ?: self::generarPasswordSegura(10);
 
             if (!$nombre || mb_strlen($nombre) > 80) {
                 $errores[] = "Fila " . ($i + 2) . ": nombre vacío o excede 80 caracteres.";
@@ -188,7 +210,7 @@ class ImportService
 
             $finalPassword = $passwordIdx !== null && trim($row[$passwordIdx] ?? '') !== ''
                 ? trim($row[$passwordIdx])
-                : self::generarPasswordSegura(12);
+                : self::generarPasswordSegura(16);
 
             if (mb_strlen($finalPassword) < 8 || !preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $finalPassword)) {
                 $errores[] = "Fila " . ($i + 2) . ": contraseña no cumple mínimo 8 caracteres, mayúscula, minúscula y número.";
@@ -294,7 +316,7 @@ class ImportService
                 $nombre   = $nombre ?: 'Docente';
                 $apellido = $apellido ?: $cedula;
 
-                $passwordGenerada = self::generarPasswordSegura(12);
+                $passwordGenerada = self::generarPasswordSegura(16);
                 $rolId = ($tipo === 'administrativa') ? 2 : 3;
 
                 $user = User::create([
@@ -308,11 +330,12 @@ class ImportService
                     'codigo_qr_estatico' => ($rolId == 3 && DB::getDriverName() === 'mysql') ? null : Str::uuid()->toString(),
                 ]);
 
+                unset($passwordGenerada);
+
                 $usuariosCreados[] = [
-                    'nombre'   => $user->nombre_completo,
-                    'cedula'   => $cedula,
-                    'password' => $passwordGenerada,
-                    'rol'      => $rolId === 3 ? 'Docente' : 'Administrativo',
+                    'nombre' => $user->nombre_completo,
+                    'cedula' => $cedula,
+                    'rol'    => $rolId === 3 ? 'Docente' : 'Administrativo',
                 ];
             }
             $diaNum = $diasMap[strtolower($dia)] ?? null;

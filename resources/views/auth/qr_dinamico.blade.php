@@ -27,7 +27,7 @@
                 </div>
 
                 <div class="mt-3">
-                    <button class="btn btn-outline-primary btn-sm" onclick="refrescarQR()">
+                    <button class="btn btn-outline-primary btn-sm" data-refrescar-qr>
                         <i class="bi bi-arrow-clockwise me-1"></i>Renovar ahora
                     </button>
                 </div>
@@ -57,12 +57,12 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     const qrUrl = '{{ route("qr.dinamico", $user) }}';
     let countdownInterval = null;
     let tiempoRestante = 60;
 
-    function refrescarQR() {
+    window.refrescarQR = function refrescarQR() {
         const container = document.getElementById('qrContainer');
         container.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>';
 
@@ -94,7 +94,7 @@
             timer.style.width = ((tiempoRestante / 60) * 100) + '%';
             expiry.textContent = 'Expira en: ' + tiempoRestante + 's';
             timer.className = tiempoRestante <= 10 ? 'progress-bar bg-danger' : 'progress-bar bg-primary';
-            if (tiempoRestante <= 0) { clearInterval(countdownInterval); refrescarQR(); }
+            if (tiempoRestante <= 0) { clearInterval(countdownInterval); window.refrescarQR(); }
         }, 1000);
     }
 

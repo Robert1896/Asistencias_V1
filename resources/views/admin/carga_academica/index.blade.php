@@ -20,11 +20,11 @@
     <div class="card-body">
         <div class="row g-3 align-items-end">
             <div class="col-md-6">
-                <label class="form-label">Buscar</label>
+                <label class="form-label" for="busquedaDocente">Buscar</label>
                 <form method="GET" action="{{ route('admin.materias') }}">
                     <div class="input-group">
-                        <input type="text" name="busqueda" class="form-control" placeholder="Nombre del docente o materia..." value="{{ request('busqueda') }}">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                        <input type="text" name="busqueda" id="busquedaDocente" class="form-control" placeholder="Nombre del docente o materia..." value="{{ request('busqueda') }}">
+                        <button type="submit" class="btn btn-primary" aria-label="Buscar"><i class="bi bi-search"></i></button>
                         @if (request('busqueda'))
                             <a href="{{ route('admin.materias') }}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
                         @endif
@@ -74,7 +74,7 @@
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <form method="POST" action="{{ route('admin.materias.destroy', $c) }}" class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar esta materia?')">
+                                  data-confirm="¿Eliminar esta materia?">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
                                     <i class="bi bi-trash"></i>

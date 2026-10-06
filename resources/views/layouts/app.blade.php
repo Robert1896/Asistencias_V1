@@ -195,7 +195,8 @@
     @endauth
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         /* Global AJAX error handler */
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('form[data-ajax]').forEach(function(form) {
@@ -229,7 +230,7 @@
             });
         });
 
-        function showToast(msg, type) {
+        window.showToast = function showToast(msg, type) {
             var container = document.getElementById('main-content');
             if (!container) return;
             var inner = container.querySelector('.content-inner');
@@ -256,13 +257,13 @@
         });
 
         /* Loading overlay helpers */
-        function showLoading(msg) {
+        window.showLoading = function showLoading(msg) {
             var o = document.getElementById('loadingOverlay');
             var t = document.getElementById('loadingText');
             if (o) { o.classList.add('active'); }
             if (t && msg) { t.textContent = msg; }
         }
-        function hideLoading() {
+        window.hideLoading = function hideLoading() {
             var o = document.getElementById('loadingOverlay');
             if (o) { o.classList.remove('active'); }
         }

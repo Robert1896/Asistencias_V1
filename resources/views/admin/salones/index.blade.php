@@ -37,6 +37,7 @@
         @csrf
         @method('DELETE')
         <input type="hidden" name="confirmar_limpiar" value="1">
+        <input type="hidden" name="confirmacion_texto" id="confirmacionTextoLimpiar" value="">
     </form>
 
     {{-- Alertas --}}
@@ -63,13 +64,13 @@
         <div class="alert alert-info alert-dismissible fade show">
             <strong><i class="bi bi-person-plus me-1"></i>Usuarios creados por importación:</strong>
             <div class="table-responsive mt-2">
-                <table class="table table-sm table-bordered mb-0 small" role="table" aria-label="Asignaciones rápidas">
+                <table class="table table-sm table-bordered mb-0 small" role="table" aria-label="Usuarios creados por importación">
                     <thead class="table-light">
                         <tr>
                             <th>Nombre</th>
                             <th>Cédula</th>
                             <th>Rol</th>
-                            <th>Contraseña</th>
+                            <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -78,13 +79,16 @@
                                 <td>{{ $u['nombre'] }}</td>
                                 <td>{{ $u['cedula'] }}</td>
                                 <td>{{ $u['rol'] }}</td>
-                                <td><code>{{ $u['password'] }}</code></td>
+                                <td><span class="badge text-bg-warning">Inactivo</span></td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-            <small class="text-muted d-block mt-1">Comparte las contraseñas con los usuarios. Ellos iniciarán sesión con su cédula.</small>
+            <small class="text-muted d-block mt-1">
+                Las contraseñas generadas no se muestran por seguridad. Activa cada usuario y pide que use
+                <em>«Olvidé mi contraseña»</em> para establecer la suya con el enlace enviado a su correo.
+            </small>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -167,7 +171,7 @@
                                         @if ($salon->asignaciones->isEmpty())
                                             <form action="{{ route('admin.salones.destroy', $salon) }}" method="POST"
                                                   class="d-inline"
-                                                  onsubmit="return confirm('¿Eliminar este salón?');">
+                                                  data-confirm="¿Eliminar este salón?">
                                                 @csrf @method('DELETE')
                                                 <button class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar">
                                                     <i class="bi bi-trash"></i>
@@ -301,7 +305,7 @@
                 <small class="text-muted" id="qrSalonCodigo"></small>
             </div>
             <div class="modal-footer justify-content-center gap-2">
-                <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <button class="btn btn-outline-secondary btn-sm" data-imprimir>
                     <i class="bi bi-printer me-1"></i>Imprimir
                 </button>
                 <button class="btn btn-outline-warning btn-sm" id="btnRegenerarQr" title="Generar un nuevo código QR. El anterior dejará de funcionar.">
@@ -326,7 +330,7 @@
 @endpush
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('salonModal');
     const form = document.getElementById('salonForm');
@@ -368,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.querySelectorAll('.ver-qr-salon').forEach(btn => {
     btn.addEventListener('click', function () {
         const id = this.dataset.id;
@@ -429,14 +433,24 @@ function esc(str) {
     return d.innerHTML;
 }
 
-// Limpiar horarios (botón separado)
+// Limpiar horarios (acción destructiva: exige confirmación escrita)
 document.getElementById('btnLimpiarHorarios').addEventListener('click', function() {
-    if (!confirm('Esto eliminará TODAS las asignaciones y cargas académicas actuales.\n\n¿Estás seguro de que deseas limpiar todos los horarios?')) {
+    const confirmacion = window.prompt(
+        'Se eliminarán TODAS las asignaciones y cargas académicas actuales.\n' +
+        'Esta acción no se puede deshacer.\n\n' +
+        'Escribe ELIMINAR TODO (en mayúsculas) para confirmar:'
+    );
+
+    if (confirmacion === null) {
         return;
     }
-    if (!confirm('Última confirmación: esta acción no se puede deshacer.\n\n¿Continuar?')) {
+
+    if (confirmacion.trim() !== 'ELIMINAR TODO') {
+        window.alert('Confirmación incorrecta. No se eliminó nada.');
         return;
     }
+
+    document.getElementById('confirmacionTextoLimpiar').value = 'ELIMINAR TODO';
     document.getElementById('formLimpiar').submit();
 });
 

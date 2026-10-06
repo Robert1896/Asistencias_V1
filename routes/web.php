@@ -53,9 +53,11 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     Route::post('justificar/{asistencia}', [JustificacionController::class, 'solicitar'])->name('justificaciones.solicitar');
 
     // Estación de chequeo
-    Route::get('estacion', [EstacionController::class, 'index'])->name('estacion.index');
-    Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar');
-    Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc');
+    Route::middleware('can:estacion_operar')->group(function () {
+        Route::get('estacion', [EstacionController::class, 'index'])->name('estacion.index');
+        Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar');
+        Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc');
+    });
     Route::get('estacion/manual', [EstacionController::class, 'registroManual'])->name('estacion.manual')->middleware('can:asistencias_registrar');
     Route::post('estacion/manual', [EstacionController::class, 'registrarManual'])->name('estacion.registrar')->middleware('can:asistencias_registrar');
     Route::get('estacion/buscar', [EstacionController::class, 'buscarEmpleado'])->name('estacion.buscar')->middleware('can:asistencias_registrar');
@@ -117,7 +119,9 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::post('salones/disponibilidad', [SalonController::class, 'disponibilidad'])->name('admin.salones.disponibilidad');
 
         // Importar asignaciones de salones
-        Route::delete('salones/asignaciones/limpiar', [SalonController::class, 'limpiarAsignaciones'])->name('admin.salones.limpiar');
+        Route::delete('salones/asignaciones/limpiar', [SalonController::class, 'limpiarAsignaciones'])
+            ->middleware('throttle:5,60')
+            ->name('admin.salones.limpiar');
         Route::post('salones/importar', [SalonController::class, 'importar'])->name('admin.salones.importar');
         Route::get('salones/plantilla', [SalonController::class, 'plantilla'])->name('admin.salones.plantilla');
 

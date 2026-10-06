@@ -34,28 +34,28 @@
                     <hr class="mt-1 mb-2">
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <label class="form-label small">Nombre *</label>
-                            <input type="text" name="nombre" class="form-control form-control-sm"
+                            <label class="form-label small" for="nuevoNombre">Nombre *</label>
+                            <input type="text" name="nombre" id="nuevoNombre" class="form-control form-control-sm"
                                    placeholder="Nombre" value="{{ old('nombre') }}" required
                                    pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
-                                   oninput="this.value=this.value.replace(/[^A-Za-záéíóúñÁÉÍÓÚÑ\s]/g,'')">
+                                   data-solo-letras>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small">Apellido *</label>
-                            <input type="text" name="apellido" class="form-control form-control-sm"
+                            <label class="form-label small" for="nuevoApellido">Apellido *</label>
+                            <input type="text" name="apellido" id="nuevoApellido" class="form-control form-control-sm"
                                    placeholder="Apellido" value="{{ old('apellido') }}" required
                                    pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
-                                   oninput="this.value=this.value.replace(/[^A-Za-záéíóúñÁÉÍÓÚÑ\s]/g,'')">
+                                   data-solo-letras>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small">Cédula *</label>
-                            <input type="number" name="cedula" class="form-control form-control-sm"
+                            <label class="form-label small" for="nuevoCedula">Cédula *</label>
+                            <input type="number" name="cedula" id="nuevoCedula" class="form-control form-control-sm"
                                    placeholder="Cédula" value="{{ old('cedula') }}" required min="1000000" max="99999999"
-                                   oninput="this.value=this.value.slice(0,8)">
+                                   data-max-len="8">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small">Correo *</label>
-                            <input type="email" name="email" class="form-control form-control-sm"
+                            <label class="form-label small" for="nuevoEmail">Correo *</label>
+                            <input type="email" name="email" id="nuevoEmail" class="form-control form-control-sm"
                                    placeholder="correo@universidad.edu" value="{{ old('email') }}" required>
                         </div>
                     </div>
@@ -180,7 +180,7 @@
                                 <button type="submit" class="badge bg-{{ $u->estatus === 'activo' ? 'success' : 'danger' }} text-decoration-none border-0"
                                         style="cursor:pointer;"
                                         data-bs-toggle="tooltip" title="Cambiar a {{ $u->estatus === 'activo' ? 'inactivo' : 'activo' }}"
-                                        onclick="return confirm('¿Cambiar estado de {{ $u->nombre_completo }}?')">
+                                        data-confirm="¿Cambiar estado de {{ $u->nombre_completo }}?">
                                     {{ $u->estatus }}
                                 </button>
                             </form>
@@ -191,14 +191,15 @@
                         <td><code style="font-size:0.65rem;">{{ $u->codigo_qr_estatico ?? '—' }}</code></td>
                         <td>
                             <button type="button" class="btn btn-outline-success btn-sm"
-                                    onclick="verQR({{ $u->id }}, '{{ $u->nombre_completo }}')">
+                                    data-ver-qr="{{ $u->id }}"
+                                    data-ver-qr-nombre="{{ $u->nombre_completo }}">
                                 <i class="bi bi-qr-code"></i>
                             </button>
                             <a href="#" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
                                data-bs-target="#edit-{{ $u->id }}" aria-label="Editar"><i class="bi bi-pencil"></i></a>
                             @if ($u->id !== auth()->id())
                             <form method="POST" action="{{ route('admin.usuarios.destroy', $u) }}" class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar a {{ $u->nombre_completo }}?')">
+                                  data-confirm="¿Eliminar a {{ $u->nombre_completo }}?">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
                             </form>
@@ -210,41 +211,41 @@
                             <form method="POST" action="{{ route('admin.usuarios.update', $u) }}" class="row g-2 p-2 align-items-end" data-validate>
                                 @csrf @method('PUT')
                                 <div class="col-md-2">
-                                    <label class="form-label small text-muted">Nombre</label>
-                                    <input type="text" name="nombre" class="form-control form-control-sm"
+                                    <label class="form-label small text-muted" for="editNombre{{ $u->id }}">Nombre</label>
+                                    <input type="text" name="nombre" id="editNombre{{ $u->id }}" class="form-control form-control-sm"
                                            value="{{ $u->nombre }}" required
                                            pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
-                                           oninput="this.value=this.value.replace(/[^A-Za-záéíóúñÁÉÍÓÚÑ\s]/g,'')">
+                                           data-solo-letras>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small text-muted">Apellido</label>
-                                    <input type="text" name="apellido" class="form-control form-control-sm"
+                                    <label class="form-label small text-muted" for="editApellido{{ $u->id }}">Apellido</label>
+                                    <input type="text" name="apellido" id="editApellido{{ $u->id }}" class="form-control form-control-sm"
                                            value="{{ $u->apellido }}" required
                                            pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
-                                           oninput="this.value=this.value.replace(/[^A-Za-záéíóúñÁÉÍÓÚÑ\s]/g,'')">
+                                           data-solo-letras>
                                 </div>
                                 <div class="col-md-1">
-                                    <label class="form-label small text-muted">Cédula</label>
-                                    <input type="number" name="cedula" class="form-control form-control-sm"
+                                    <label class="form-label small text-muted" for="editCedula{{ $u->id }}">Cédula</label>
+                                    <input type="number" name="cedula" id="editCedula{{ $u->id }}" class="form-control form-control-sm"
                                            value="{{ $u->cedula }}" required min="1000000" max="99999999"
-                                           oninput="this.value=this.value.slice(0,8)">
+                                           data-max-len="8">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small text-muted">Correo</label>
-                                    <input type="email" name="email" class="form-control form-control-sm"
+                                    <label class="form-label small text-muted" for="editEmail{{ $u->id }}">Correo</label>
+                                    <input type="email" name="email" id="editEmail{{ $u->id }}" class="form-control form-control-sm"
                                            value="{{ $u->email }}" required>
                                 </div>
                                 <div class="col-md-1">
-                                    <label class="form-label small text-muted">Rol</label>
-                                    <select name="rol_id" class="form-select form-select-sm" required>
+                                    <label class="form-label small text-muted" for="editRol{{ $u->id }}">Rol</label>
+                                    <select name="rol_id" id="editRol{{ $u->id }}" class="form-select form-select-sm" required>
                                         @foreach ($roles as $rol)
                                             <option value="{{ $rol->id }}" {{ $rol->id === $u->rol_id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small text-muted">Nueva contraseña</label>
-                                    <input type="password" name="password" class="form-control form-control-sm"
+                                    <label class="form-label small text-muted" for="editPassword{{ $u->id }}">Nueva contraseña</label>
+                                    <input type="password" name="password" id="editPassword{{ $u->id }}" class="form-control form-control-sm"
                                            placeholder="Mín. 8 caracteres" minlength="8">
                                 </div>
                                 <div class="col-md-2">
@@ -298,7 +299,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
         var toggleBtn = document.getElementById('toggle-pw-new');
         var pwInput = document.getElementById('new-user-password');

@@ -20,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Str;
@@ -414,16 +415,10 @@ class SalonController extends Controller
 
         ActivityLog::log('salon_importar', "Importación de asignaciones: {$resultado['created']} creadas", 'usuarios', ['creados' => $resultado['created'], 'errores' => count($resultado['errors'])]);
 
-        $usuariosSinPassword = array_map(fn($u) => [
-            'nombre' => $u['nombre'],
-            'cedula' => $u['cedula'],
-            'rol'    => $u['rol'],
-        ], $resultado['usuarios_creados'] ?? []);
-
         return redirect()->route('admin.salones.index')
             ->with('success', $mensaje)
             ->with('errores_importar', $resultado['errors'])
-            ->with('usuarios_creados', $usuariosSinPassword)
+            ->with('usuarios_creados', $resultado['usuarios_creados'] ?? [])
             ->with('salones_creados', $resultado['salones_creados'])
             ->with('horarios_creados', $resultado['horarios_creados'])
             ->with('coordinaciones_creadas', $resultado['coordinaciones_creadas']);
@@ -431,16 +426,32 @@ class SalonController extends Controller
 
     public function limpiarAsignaciones(Request $request): RedirectResponse
     {
-        $request->validate(['confirmar_limpiar' => 'required|accepted']);
+        $request->validate([
+            'confirmar_limpiar' => ['required', 'accepted'],
+            'confirmacion_texto' => ['required', 'string', 'in:ELIMINAR TODO'],
+        ]);
 
-        \Illuminate\Support\Facades\DB::transaction(function () {
+        $asignaciones = DocenteHorarioPivot::query()->count();
+        $cargas       = CargaAcademicaDocente::query()->count();
+
+        DB::transaction(function () {
             DocenteHorarioPivot::query()->delete();
             CargaAcademicaDocente::query()->delete();
         });
 
-        ActivityLog::log('salon_limpiar', 'Se limpiaron todas las asignaciones y cargas académicas', 'usuarios');
+        ActivityLog::log(
+            'salon_limpiar',
+            "Se eliminaron {$asignaciones} asignaciones y {$cargas} cargas académicas",
+            'usuarios',
+            [
+                'asignaciones_eliminadas' => $asignaciones,
+                'cargas_eliminadas'       => $cargas,
+                'user_id'                 => auth()->id(),
+                'ip'                      => $request->ip(),
+            ]
+        );
 
         return redirect()->route('admin.salones.index')
-            ->with('success', 'Todas las asignaciones y cargas académicas fueron eliminadas. Ahora puedes importar el nuevo horario.');
+            ->with('success', "Se eliminaron {$asignaciones} asignaciones y {$cargas} cargas académicas. Ahora puedes importar el nuevo horario.");
     }
 }

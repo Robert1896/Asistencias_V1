@@ -8,6 +8,7 @@ use App\Models\Departamento;
 use App\Models\Salon;
 use App\Models\User;
 use App\Notifications\AsistenciaNotificacion;
+use App\Support\EstadoAsistencia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -25,7 +26,12 @@ class AttendanceService
             ->first();
 
         if (!$asistencia) {
-            $estado = $this->calcularEstado($horaAhora, $usuario->horarioAdministrativo, $diaSemana === Carbon::SATURDAY);
+            $estado = EstadoAsistencia::desdeHorarioFijo(
+                $horaAhora,
+                $usuario->horarioAdministrativo?->hora_entrada,
+                $diaSemana === Carbon::SATURDAY,
+                $diaSemana
+            );
 
             Asistencia::create([
                 'usuario_id'   => $usuario->id,
@@ -142,15 +148,9 @@ class AttendanceService
             ];
         }
 
-        $estado = 'Presente';
-        if ($sinAsignacion) {
-            $estado = 'Sin asignación';
-        } else {
-            $limite = Carbon::parse($bloque['hora_inicio'])->addMinutes(15)->format('H:i:s');
-            if ($horaAhora > $limite) {
-                $estado = 'Tarde';
-            }
-        }
+        $estado = $sinAsignacion
+            ? EstadoAsistencia::SIN_ASIGNACION
+            : EstadoAsistencia::desdeLimite($horaAhora, $bloque['hora_inicio']);
 
         Asistencia::create([
             'usuario_id'    => $usuario->id,
@@ -256,7 +256,7 @@ class AttendanceService
             ->first();
 
         if (!$asistencia) {
-            $estado = $this->estadoDesdeLimite($horaAhora, $sesion['hora_inicio']);
+$estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
 
             Asistencia::create([
                 'usuario_id'    => $usuario->id,
@@ -270,8 +270,8 @@ class AttendanceService
             ]);
 
             $logData = [
-                'user_id'    => $usuario->id,
-                'horario_id' => $bloqueInicio,
+                'user_id'        => $usuario->id,
+                'horario_id'     => $bloqueInicio,
                 'salon_id'   => $sesion['salon_id'],
                 'estado'     => $estado,
             ];
@@ -431,7 +431,7 @@ class AttendanceService
                 return $this->resultado(false, "{$empleado->nombre_completo} ya tiene asistencia registrada para este bloque.", 'info');
             }
 
-            $estado = $this->estadoDesdeLimite($horaAhora, $sesion['hora_inicio']);
+            $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
 
             Asistencia::create([
                 'usuario_id'    => $empleado->id,
@@ -492,7 +492,11 @@ class AttendanceService
                 return $this->resultado(false, "{$empleado->nombre_completo} ya tiene registro de asistencia hoy.", 'info');
             }
 
-            $estado = $this->calcularEstado($horaAhora, $empleado->horarioAdministrativo, now()->dayOfWeek === Carbon::SATURDAY);
+            $estado = EstadoAsistencia::desdeHorarioFijo(
+                $horaAhora,
+                $empleado->horarioAdministrativo?->hora_entrada,
+                now()->dayOfWeek === Carbon::SATURDAY
+            );
 
             Asistencia::create([
                 'usuario_id'   => $empleado->id,
@@ -553,24 +557,6 @@ class AttendanceService
                 'salon_id'   => $asistenciaAbierta->salon_id,
             ]);
         }
-    }
-
-    private function calcularEstado(string $horaAhora, ?object $horario, bool $esSabado = false): string
-    {
-        if ($esSabado) return 'Apoyo Sabado';
-
-        if ($horario && now()->dayOfWeek <= Carbon::FRIDAY) {
-            $limite = Carbon::parse($horario->hora_entrada)->addMinutes(15)->format('H:i:s');
-            if ($horaAhora > $limite) return 'Tarde';
-        }
-
-        return 'Presente';
-    }
-
-    private function estadoDesdeLimite(string $horaAhora, string $horaBloqueInicio): string
-    {
-        $limite = Carbon::parse($horaBloqueInicio)->addMinutes(15)->format('H:i:s');
-        return $horaAhora > $limite ? 'Tarde' : 'Presente';
     }
 
     private function resultado(bool $ok, string $mensaje, string $tipo, ?User $user = null, ?string $marca = null, ?string $hora = null, ?string $estado = null): array

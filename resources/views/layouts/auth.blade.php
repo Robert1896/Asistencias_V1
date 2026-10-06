@@ -91,6 +91,7 @@
     </style>
 </head>
 <body class="d-flex align-items-center min-vh-100">
+    <a href="#auth-content" class="visually-hidden-focusable">Ir al contenido principal</a>
     <div class="auth-wave-top">
         <svg viewBox="0 0 1400 220" preserveAspectRatio="none" style="width:100%;height:100%;">
             <path d="M0,0 L1400,0 L1400,90 Q1200,160 1000,110 Q800,60 600,120 Q400,180 200,110 Q100,75 0,110 Z" fill="rgba(230,81,0,0.18)"/>
@@ -102,19 +103,22 @@
             <path d="M0,150 L1400,150 L1400,50 Q1200,0 1000,60 Q800,120 600,50 Q400,0 200,70 Q100,120 0,70 Z" fill="rgba(13,33,55,0.12)"/>
         </svg>
     </div>
-    <button class="auth-theme-toggle" id="authThemeToggle" title="Cambiar tema">
+    <button class="auth-theme-toggle" id="authThemeToggle" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro">
         <i class="bi bi-moon-fill" id="authThemeIcon"></i>
     </button>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-5 col-lg-4">
                 <x-alertas />
-                @yield('content')
+                <main id="auth-content">
+                    @yield('content')
+                </main>
             </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.querySelectorAll('form[data-validate]').forEach(function(form) {
             var fields = form.querySelectorAll('[required], [type="email"], [minlength], [maxlength], [pattern]');
             fields.forEach(function(field) {
@@ -172,7 +176,7 @@
             });
         });
     </script>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function() {
             var btn = document.getElementById('toggle-login-pw');
             var input = document.getElementById('login-password');
@@ -195,7 +199,7 @@
             });
         });
     </script>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         (function() {
             var toggle = document.getElementById('authThemeToggle');
             var icon = document.getElementById('authThemeIcon');

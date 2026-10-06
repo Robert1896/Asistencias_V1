@@ -13,16 +13,16 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reportes') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Fecha Inicio</label>
-                <input type="date" name="fecha_inicio" class="form-control" value="{{ $fechaInicio }}">
+                <label class="form-label" for="filtroFechaInicio">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" id="filtroFechaInicio" class="form-control" value="{{ $fechaInicio }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Fecha Fin</label>
-                <input type="date" name="fecha_fin" class="form-control" value="{{ $fechaFin }}">
+                <label class="form-label" for="filtroFechaFin">Fecha Fin</label>
+                <input type="date" name="fecha_fin" id="filtroFechaFin" class="form-control" value="{{ $fechaFin }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Tipo</label>
-                <select name="tipo" class="form-select">
+                <label class="form-label" for="filtroTipo">Tipo</label>
+                <select name="tipo" id="filtroTipo" class="form-select">
                     <option value="general" {{ $tipoReporte === 'general' ? 'selected' : '' }}>General</option>
                     <option value="docentes" {{ $tipoReporte === 'docentes' ? 'selected' : '' }}>Solo Docentes</option>
                     <option value="administrativos" {{ $tipoReporte === 'administrativos' ? 'selected' : '' }}>Solo Administrativos</option>

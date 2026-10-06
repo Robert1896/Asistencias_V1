@@ -47,7 +47,7 @@
                         <label class="form-label">Cédula *</label>
                         <input type="number" name="cedula" class="form-control @error('cedula') is-invalid @enderror"
                                value="{{ old('cedula', $user->cedula) }}" required min="1000000" max="99999999"
-                               oninput="this.value=this.value.slice(0,8)">
+                               data-max-len="8">
                     </div>
 
                     <div class="mb-3">
@@ -98,7 +98,7 @@
     </div>
 </div>
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.getElementById('password-input')?.addEventListener('input', function() {
     var val = this.value;
     var bar = document.getElementById('strength-bar');

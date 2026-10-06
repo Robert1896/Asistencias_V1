@@ -45,8 +45,7 @@ class DatabaseSeeder extends Seeder
             ...array_fill_keys(range(1, 11), 1),
             // Administrativo: estación + horarios
             9 => 2, 7 => 2,
-            // Docente: estación
-            9 => 3,
+
             // Asistente: estación
             9 => 4,
         ];
@@ -66,11 +65,6 @@ class DatabaseSeeder extends Seeder
                 'rol_id' => 2, 'permiso_id' => $permisoId,
             ]);
         }
-
-        // Docente
-        DB::table('rol_permiso')->insertOrIgnore([
-            'rol_id' => 3, 'permiso_id' => 9,
-        ]);
 
         // Asistente: estación + asistencias + salones + horarios
         foreach ([9, 12, 13, 11, 14, 7] as $permisoId) {

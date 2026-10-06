@@ -79,7 +79,7 @@
                         </td>
                         <td>
                             <form method="POST" action="{{ route('admin.feriados.destroy', $f) }}" class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar {{ $f->nombre }}?')">
+                                  data-confirm="¿Eliminar {{ $f->nombre }}?">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
                             </form>

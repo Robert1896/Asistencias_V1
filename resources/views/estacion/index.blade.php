@@ -100,7 +100,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 (function() {
     var sonidoExito = new Audio('https://cdn.soundjay.com/button/sounds/button-09.mp3');
     var sonidoError = new Audio('https://cdn.soundjay.com/button/sounds/button-10.mp3');

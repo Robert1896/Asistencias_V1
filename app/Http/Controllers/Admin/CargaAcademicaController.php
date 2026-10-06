@@ -15,9 +15,12 @@ class CargaAcademicaController extends Controller
         $query = CargaAcademicaDocente::with('usuario')->orderBy('usuario_id');
 
         if ($busqueda = $request->input('busqueda')) {
-            $query->whereHas('usuario', function ($q) use ($busqueda) {
-                $q->where('nombre_completo', 'LIKE', '%' . addslashes($busqueda) . '%');
-            })->orWhere('materia', 'LIKE', '%' . addslashes($busqueda) . '%');
+            $escaped = escape_like($busqueda);
+
+            $query->where(function ($q) use ($escaped) {
+                $q->whereHas('usuario', fn($u) => $u->where('nombre_completo', 'like', $escaped))
+                  ->orWhere('materia', 'like', $escaped);
+            });
         }
 
         $cargas = $query->get();

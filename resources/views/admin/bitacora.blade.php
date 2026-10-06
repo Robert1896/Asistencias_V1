@@ -13,8 +13,8 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.bitacora') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Tipo</label>
-                <select name="tipo" class="form-select">
+                <label class="form-label" for="filtroTipo">Tipo</label>
+                <select name="tipo" id="filtroTipo" class="form-select">
                     <option value="">Todos</option>
                     <option value="auth" {{ request('tipo') === 'auth' ? 'selected' : '' }}>Autenticación</option>
                     <option value="usuarios" {{ request('tipo') === 'usuarios' ? 'selected' : '' }}>Usuarios</option>
@@ -23,8 +23,8 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Fecha</label>
-                <input type="date" name="fecha" class="form-control" value="{{ request('fecha') }}">
+                <label class="form-label" for="filtroFecha">Fecha</label>
+                <input type="date" name="fecha" id="filtroFecha" class="form-control" value="{{ request('fecha') }}">
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">Filtrar</button>

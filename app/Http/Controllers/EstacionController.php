@@ -292,7 +292,7 @@ class EstacionController extends Controller
         $empleados = User::where('estatus', 'activo')
             ->whereIn('rol_id', [2, 3])
             ->where(function ($q) use ($query) {
-                $escaped = '%' . addslashes($query) . '%';
+                $escaped = escape_like($query);
                 $q->where('nombre', 'like', $escaped)
                   ->orWhere('apellido', 'like', $escaped)
                   ->orWhere('nombre_completo', 'like', $escaped)

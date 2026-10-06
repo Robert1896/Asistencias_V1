@@ -138,7 +138,7 @@
                                             <select name="bloques[{{ $keyPrefix }}][tipo]"
                                                     class="form-select form-select-sm tipo-select mb-1"
                                                     aria-label="Tipo de actividad"
-                                                    onchange="document.getElementById('chk-{{ $bloque->id }}').checked = true">
+                                                    data-marcar-checkbox="chk-{{ $bloque->id }}">
                                                 <option value="carga_academica" {{ $tipoSeleccionado === 'carga_academica' ? 'selected' : '' }}>Clase</option>
                                                 <option value="asesoria" {{ $tipoSeleccionado === 'asesoria' ? 'selected' : '' }}>Asesoría</option>
                                                 <option value="administrativa" {{ $tipoSeleccionado === 'administrativa' ? 'selected' : '' }}>Admin.</option>
@@ -162,7 +162,7 @@
                                                     aria-label="Salón"
                                                     data-horario-id="{{ $bloque->id }}"
                                                     data-ocupados="{{ json_encode($salonesOcupados) }}"
-                                                    onchange="document.getElementById('chk-{{ $bloque->id }}').checked = true">
+                                                    data-marcar-checkbox="chk-{{ $bloque->id }}">
                                                 <option value="">Sin salón</option>
                                                 @foreach ($salones as $salon)
                                                     @php
@@ -185,7 +185,7 @@
                                             <select name="bloques[{{ $keyPrefix }}][carga_academica_id]"
                                                     class="form-select form-select-sm materia-select mt-1"
                                                     aria-label="Materia"
-                                                    onchange="document.getElementById('chk-{{ $bloque->id }}').checked = true"
+                                                    data-marcar-checkbox="chk-{{ $bloque->id }}"
                                                     style="{{ $tipoSeleccionado !== 'carga_academica' ? 'display:none;' : '' }}">
                                                 <option value="">Sin materia</option>
                                                 @foreach ($cargas as $c)
@@ -201,8 +201,8 @@
                                                    placeholder="Sección"
                                                    aria-label="Sección"
                                                    maxlength="30"
-                                                   value="{{ $seccionVal }}"
-                                                   oninput="document.getElementById('chk-{{ $bloque->id }}').checked = true"
+value="{{ $seccionVal }}"
+                                                    data-marcar-checkbox="chk-{{ $bloque->id }}"
                                                    style="{{ $tipoSeleccionado !== 'carga_academica' ? 'display:none;' : '' }}">
                                         @else
                                             <span class="text-muted" style="font-size:0.7rem;">—</span>
@@ -225,7 +225,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     // Marcar/Desmarcar todo
     document.getElementById('btnMarcarTodos')?.addEventListener('click', function () {

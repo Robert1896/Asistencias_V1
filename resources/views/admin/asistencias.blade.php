@@ -65,16 +65,16 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.asistencias') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Fecha Desde</label>
-                <input type="date" name="fecha_inicio" class="form-control" value="{{ request('fecha_inicio', now()->startOfMonth()->toDateString()) }}">
+                <label class="form-label" for="filtroFechaInicio">Fecha Desde</label>
+                <input type="date" name="fecha_inicio" id="filtroFechaInicio" class="form-control" value="{{ request('fecha_inicio', now()->startOfMonth()->toDateString()) }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Fecha Hasta</label>
-                <input type="date" name="fecha_fin" class="form-control" value="{{ request('fecha_fin', now()->toDateString()) }}">
+                <label class="form-label" for="filtroFechaFin">Fecha Hasta</label>
+                <input type="date" name="fecha_fin" id="filtroFechaFin" class="form-control" value="{{ request('fecha_fin', now()->toDateString()) }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Estado</label>
-                <select name="estado" class="form-select">
+                <label class="form-label" for="filtroEstado">Estado</label>
+                <select name="estado" id="filtroEstado" class="form-select">
                     <option value="">Todos</option>
                     <option value="Presente" {{ request('estado') === 'Presente' ? 'selected' : '' }}>Presente</option>
                     <option value="Tarde" {{ request('estado') === 'Tarde' ? 'selected' : '' }}>Tarde</option>
@@ -169,7 +169,9 @@
                                                 <div class="mt-2">
                                                     <label class="form-label small fw-semibold">Justificativo (opcional)</label>
                                                     <input type="file" name="archivo" id="archivoJustificacion{{ $a->id }}" class="form-control form-control-sm @error('archivo') is-invalid @enderror"
-                                                           accept=".pdf,.jpg,.jpeg,.png" onchange="previewArchivo(this, 'archivoNombre{{ $a->id }}', 'archivoPreview{{ $a->id }}')">
+                                                           accept=".pdf,.jpg,.jpeg,.png"
+                                                           data-preview-archivo="archivoNombre{{ $a->id }}"
+                                                           data-preview-imagen="archivoPreview{{ $a->id }}">
                                                     <div id="archivoNombre{{ $a->id }}" class="form-text text-primary"></div>
                                                     <img id="archivoPreview{{ $a->id }}" class="mt-1 rounded d-none" style="max-height:100px;">
                                                     <div class="form-text">PDF o imagen, máximo 5MB.</div>
@@ -188,7 +190,8 @@
                                 @csrf @method('PUT')
                                 <input type="hidden" name="justificado" value="No">
                                 <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                        data-bs-toggle="tooltip" title="Remover justificación" onclick="return confirm('¿Remover justificación?')">
+                                        data-bs-toggle="tooltip" title="Remover justificación"
+                                        data-confirm="¿Remover justificación?">
                                     <i class="bi bi-x-circle"></i>
                                 </button>
                             </form>
@@ -222,7 +225,7 @@
     </div></div>
 </noscript>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     const labels = {!! json_encode($chartLabels) !!};
     const presentes = {!! json_encode($chartPresentes) !!};
     const tardes = {!! json_encode($chartTardes) !!};
@@ -266,24 +269,5 @@
     });
     @endif
 </script>
-<script>
-function previewArchivo(input, nombreId, previewId) {
-    const nombre = document.getElementById(nombreId);
-    const preview = document.getElementById(previewId);
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        nombre.textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) { preview.src = e.target.result; preview.classList.remove('d-none'); };
-            reader.readAsDataURL(file);
-        } else {
-            preview.classList.add('d-none');
-        }
-    } else {
-        nombre.textContent = '';
-        preview.classList.add('d-none');
-    }
-}
-</script>
+
 @endpush

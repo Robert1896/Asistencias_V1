@@ -24,12 +24,12 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reportes.empleado', $empleado) }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Fecha Inicio</label>
-                <input type="date" name="fecha_inicio" class="form-control" value="{{ $fechaInicio }}">
+                <label class="form-label" for="filtroFechaInicio">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" id="filtroFechaInicio" class="form-control" value="{{ $fechaInicio }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Fecha Fin</label>
-                <input type="date" name="fecha_fin" class="form-control" value="{{ $fechaFin }}">
+                <label class="form-label" for="filtroFechaFin">Fecha Fin</label>
+                <input type="date" name="fecha_fin" id="filtroFechaFin" class="form-control" value="{{ $fechaFin }}">
             </div>
             <div class="col-md-3">
                 <button type="submit" class="btn btn-primary">Filtrar</button>

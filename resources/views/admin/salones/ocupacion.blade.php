@@ -174,7 +174,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const selector = document.getElementById('selectorSalon');
     const wrapper = document.getElementById('cuadricula-wrapper');

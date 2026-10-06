@@ -181,7 +181,7 @@
                             <td>{{ $c->horas_semanales }}</td>
                             <td>
                                 <form method="POST" action="{{ route('admin.horarios.eliminar-carga', $c) }}"
-                                      class="d-inline" onsubmit="return confirm('¿Eliminar esta carga?')">
+                                      class="d-inline" data-confirm="¿Eliminar esta carga?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-outline-danger btn-sm">✕</button>
                                 </form>
