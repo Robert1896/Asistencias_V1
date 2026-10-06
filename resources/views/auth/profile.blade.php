@@ -57,6 +57,16 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Contraseña Actual <small class="text-muted">(obligatoria para cambiar el correo o la contraseña)</small></label>
+                        <input type="password" name="current_password" autocomplete="current-password"
+                               class="form-control @error('current_password') is-invalid @enderror"
+                               placeholder="Tu contraseña actual">
+                        @error('current_password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Nueva Contraseña <small class="text-muted">(dejar vacío para no cambiar)</small></label>
                         <input type="password" name="password" id="password-input" class="form-control @error('password') is-invalid @enderror"
                                minlength="8" placeholder="Mín. 8: mayúscula + minúscula + número"

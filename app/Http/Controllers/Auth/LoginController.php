@@ -23,6 +23,7 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $login = $request->input('login', '');
+        $ipKey = 'login-ip:' . $request->ip();
 
         if (RateLimiter::tooManyAttempts('login:' . Str::lower($login), 5)) {
             $seconds = RateLimiter::availableIn('login:' . Str::lower($login));
@@ -31,6 +32,17 @@ class LoginController extends Controller
 
             throw ValidationException::withMessages([
                 'login' => ["Demasiados intentos. Intenta de nuevo en {$seconds} segundos."],
+            ]);
+        }
+
+        // Límite por IP: evita barrido de muchos correos desde un mismo origen (CWE-307)
+        if (RateLimiter::tooManyAttempts($ipKey, 30)) {
+            $seconds = RateLimiter::availableIn($ipKey);
+
+            ActivityLog::log('login_bloqueado_ip', "Intentos excesivos desde IP: {$request->ip()}", 'auth', ['ip' => $request->ip()]);
+
+            throw ValidationException::withMessages([
+                'login' => ["Demasiados intentos desde esta IP. Intenta de nuevo en {$seconds} segundos."],
             ]);
         }
 
@@ -47,6 +59,7 @@ class LoginController extends Controller
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit('login:' . Str::lower($login), 900);
+            RateLimiter::hit($ipKey, 900);
 
             ActivityLog::log('login_fallido', "Credenciales inválidas para: {$login}", 'auth', ['login' => $login]);
 
@@ -96,11 +109,10 @@ class LoginController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink($request->only('email'));
+        Password::sendResetLink($request->only('email'));
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('success', __($status))
-            : back()->withErrors(['email' => __($status)]);
+        // Respuesta idéntica exista o no el correo: evita enumeración de usuarios (CWE-204)
+        return back()->with('success', 'Si el correo está registrado en el sistema, recibirás un enlace para restablecer tu contraseña.');
     }
 
     public function showResetForm(string $token)
@@ -121,6 +133,8 @@ class LoginController extends Controller
             function ($user, $password) {
                 $user->password = $password;
                 $user->save();
+                // Fase C: mata recordatorios y demás sesiones del usuario (CWE-613)
+                $user->invalidarOtrasSesiones();
             }
         );
 

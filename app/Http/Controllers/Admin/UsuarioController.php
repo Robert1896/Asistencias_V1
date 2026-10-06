@@ -57,11 +57,18 @@ class UsuarioController extends Controller
             'rol_id'   => $data['rol_id'],
         ];
 
-        if (!empty($data['password'])) {
+        $cambioPassword = !empty($data['password']);
+
+        if ($cambioPassword) {
             $payload['password'] = $data['password'];
         }
 
         $usuario->update($payload);
+
+        if ($cambioPassword) {
+            // Fase C: la contraseña nueva invalida recordatorios/sesiones del editado
+            $usuario->invalidarOtrasSesiones();
+        }
 
         ActivityLog::log('usuario_editar', "Editó el usuario {$usuario->email}", 'usuarios', ['email' => $usuario->email]);
 

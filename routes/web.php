@@ -28,9 +28,9 @@ Route::middleware(['guest', 'no-cache'])->group(function () {
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [LoginController::class, 'login']);
     Route::get('forgot-password', [LoginController::class, 'showForgotForm'])->name('password.request');
-    Route::post('forgot-password', [LoginController::class, 'sendResetLink'])->name('password.email');
+    Route::post('forgot-password', [LoginController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
     Route::get('reset-password/{token}', [LoginController::class, 'showResetForm'])->name('password.reset');
-    Route::post('reset-password', [LoginController::class, 'reset'])->name('password.update');
+    Route::post('reset-password', [LoginController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
 });
 
 Route::post('logout', [LoginController::class, 'logout'])->middleware(['auth', 'no-cache'])->name('logout');

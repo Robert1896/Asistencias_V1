@@ -25,6 +25,19 @@ class ProfileController extends Controller
 
         $data = $request->validated();
 
+        $cambiandoPassword = !empty($data['password']);
+        $cambiandoEmail    = ($data['email'] ?? '') !== $user->email;
+
+        // Fase C: cambios sensibles de la cuenta requieren la contraseña actual (CWE-620)
+        if ($cambiandoPassword || $cambiandoEmail) {
+            $request->validate([
+                'current_password' => ['required', 'current_password'],
+            ], [
+                'current_password.required'          => 'Confirma tu contraseña actual para cambiar el correo o la contraseña.',
+                'current_password.current_password'  => 'La contraseña actual es incorrecta.',
+            ]);
+        }
+
         $payload = [
             'nombre'   => strip_tags($data['nombre']),
             'apellido' => strip_tags($data['apellido']),
@@ -32,11 +45,15 @@ class ProfileController extends Controller
             'email'    => $data['email'],
         ];
 
-        if (!empty($data['password'])) {
+        if ($cambiandoPassword) {
             $payload['password'] = $data['password'];
         }
 
         $user->update($payload);
+
+        if ($cambiandoPassword) {
+            $user->invalidarOtrasSesiones($request->session()->getId());
+        }
 
         ActivityLog::log('perfil_editar', "Perfil actualizado: {$user->email}", 'usuarios', ['user_id' => $user->id]);
 

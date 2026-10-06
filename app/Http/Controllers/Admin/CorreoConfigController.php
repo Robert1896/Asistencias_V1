@@ -55,7 +55,7 @@ class CorreoConfigController extends Controller
             return back()->with('error', 'No hay configuración de correo activa. Guarda la configuración primero.');
         }
 
-        $password = $this->decryptPassword($config->contrasena);
+        $password = $config->descifrarContrasena();
 
         config(['mail.default' => 'smtp']);
         config(['mail.mailers.smtp.host' => $config->host]);
@@ -81,16 +81,6 @@ class CorreoConfigController extends Controller
             Log::error('Error enviando correo de prueba: ' . $e->getMessage());
 
             return back()->with('error', "Error al enviar: {$e->getMessage()}");
-        }
-    }
-
-    private function decryptPassword(string $encrypted): string
-    {
-        try {
-            return Crypt::decryptString($encrypted);
-        } catch (\Exception $e) {
-            Log::error('Error desencriptando contraseña de correo: ' . $e->getMessage());
-            throw new \RuntimeException('No se pudo desencriptar la contraseña del correo configurado.');
         }
     }
 }

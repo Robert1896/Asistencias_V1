@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -52,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        $config = DB::table('correo_config')->where('activo', true)->first();
+        $config = \App\Models\CorreoConfig::where('activo', true)->first();
 
         if (!$config) {
             return;
@@ -63,17 +61,8 @@ class AppServiceProvider extends ServiceProvider
         config(['mail.mailers.smtp.port' => $config->puerto]);
         config(['mail.mailers.smtp.encryption' => $config->encriptacion]);
         config(['mail.mailers.smtp.username' => $config->usuario]);
-        config(['mail.mailers.smtp.password' => $this->decryptPassword($config->contrasena)]);
+        config(['mail.mailers.smtp.password' => $config->descifrarContrasena()]);
         config(['mail.from.address' => $config->direccion_from]);
         config(['mail.from.name' => $config->nombre_from]);
-    }
-
-    private function decryptPassword(string $encrypted): string
-    {
-        try {
-            return Crypt::decryptString($encrypted);
-        } catch (\Exception $e) {
-            return $encrypted;
-        }
     }
 }

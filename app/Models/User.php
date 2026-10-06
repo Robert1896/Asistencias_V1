@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -86,6 +89,67 @@ class User extends Authenticatable
     public function tienePermiso(string $codigoPermiso): bool
     {
         return $this->rol->permisos()->where('codigo', $codigoPermiso)->exists();
+    }
+
+    /**
+     * Fase C: invalida las demás sesiones del usuario tras un cambio de contraseña.
+     * - Rota remember_token (mata cookies "recuérdame" robadas).
+     * - Sesión activa actual: si se pasa $sesionActualId se conserva.
+     * - Si no, se eliminan TODAS las sesiones del usuario (reset por correo, etc.).
+     * Soporta drivers database y file (file: payload puede estar encriptado con
+     * SESSION_ENCRYPT, en cuyo caso se descifra con Crypt antes de inspeccionar).
+     */
+    public function invalidarOtrasSesiones(?string $sesionActualId = null): void
+    {
+        $this->forceFill(['remember_token' => Str::random(60)])->saveQuietly();
+
+        $driver = config('session.driver');
+
+        if ($driver === 'database') {
+            $query = DB::table('sessions')->where('user_id', $this->id);
+            if ($sesionActualId !== null) {
+                $query->where('id', '!=', $sesionActualId);
+            }
+            $query->delete();
+
+            return;
+        }
+
+        if ($driver !== 'file') {
+            return;
+        }
+
+        $carpeta  = config('session.files') ?: storage_path('framework/sessions');
+        $id       = $this->id;
+        $marcaPhp = 'login_web";i:' . $id . ';';
+
+        foreach (glob($carpeta . '/*') ?: [] as $archivo) {
+            if ($sesionActualId !== null && basename($archivo) === $sesionActualId) {
+                continue;
+            }
+
+            $bruto = @file_get_contents($archivo);
+            if ($bruto === false) {
+                continue;
+            }
+
+            $contenido = $bruto;
+            if (config('session.encrypt')) {
+                try {
+                    $contenido = Crypt::decrypt($bruto);
+                } catch (\Throwable $e) {
+                    continue;
+                }
+            }
+
+            $pertenece = str_contains($contenido, $marcaPhp)
+                || str_contains($contenido, '"login_web":' . $id . ',')
+                || str_contains($contenido, '"login_web":' . $id . '}');
+
+            if ($pertenece) {
+                @unlink($archivo);
+            }
+        }
     }
 
     public function obtenerSesionesDelDia(string $fecha): array
