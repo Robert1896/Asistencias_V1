@@ -134,7 +134,7 @@
                         <td class="small">
                             {{ Str::limit($a->texto_justificacion, 40) ?? '—' }}
                             @if ($a->archivo_justificacion)
-                                    <a href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($a->archivo_justificacion) }}"
+                                    <a href="{{ route('justificaciones.archivo', $a) }}"
                                        target="_blank" class="ms-1" data-bs-toggle="tooltip" title="Ver justificativo adjunto">
                                     <i class="bi bi-paperclip text-primary"></i>
                                 </a>

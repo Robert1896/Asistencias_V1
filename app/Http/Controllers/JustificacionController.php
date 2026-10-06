@@ -8,6 +8,7 @@ use App\Models\Asistencia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -45,7 +46,7 @@ class JustificacionController extends Controller
 
         $filePath = null;
         if ($request->hasFile('archivo')) {
-            $filePath = $request->file('archivo')->store('justificaciones', 'public');
+            $filePath = $request->file('archivo')->store('justificaciones', 'local');
         }
 
         $asistencia->update([
@@ -63,5 +64,26 @@ class JustificacionController extends Controller
         ]);
 
         return redirect()->route('justificaciones')->with('success', 'Justificación enviada correctamente.');
+    }
+
+    public function archivo(Asistencia $asistencia)
+    {
+        $user = Auth::user();
+
+        if ($asistencia->usuario_id !== $user->id && !Gate::allows('asistencias_ver')) {
+            abort(403, 'No autorizado para ver este documento.');
+        }
+
+        $path = $asistencia->archivo_justificacion;
+        abort_unless($path, 404);
+
+        if (Storage::disk('local')->missing($path) && Storage::disk('public')->exists($path)) {
+            Storage::disk('local')->put($path, Storage::disk('public')->get($path));
+            Storage::disk('public')->delete($path);
+        }
+
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->download($path);
     }
 }

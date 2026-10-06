@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\Csv;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -79,8 +80,8 @@ class ExportService
 
         $row = 4;
         foreach ($reporte as $r) {
-            $sheet1->setCellValue('A' . $row, $r->nombre);
-            $sheet1->setCellValue('B' . $row, $r->rol_nombre);
+            $sheet1->setCellValue('A' . $row, Csv::sanitize($r->nombre));
+            $sheet1->setCellValue('B' . $row, Csv::sanitize($r->rol_nombre));
             $sheet1->setCellValue('C' . $row, $r->dias_asistidos);
             $sheet1->setCellValue('D' . $row, $r->horas_reales);
             $sheet1->setCellValue('E' . $row, $r->horas_teoricas);
@@ -147,18 +148,18 @@ class ExportService
 
         fwrite($handle, "\xEF\xBB\xBF");
 
-        fputcsv($handle, ['REPORTE DE PRODUCTIVIDAD', $titulo], ';');
+        fputcsv($handle, Csv::fila(['REPORTE DE PRODUCTIVIDAD', $titulo]), ';');
         fputcsv($handle, [], ';');
         fputcsv($handle, ['Empleado', 'Rol', 'Días', 'Horas Reales', 'Horas Teóricas', 'Productividad (%)'], ';');
         foreach ($reporte as $r) {
-            fputcsv($handle, [$r->nombre, $r->rol_nombre, $r->dias_asistidos, $r->horas_reales, $r->horas_teoricas, $r->productividad], ';');
+            fputcsv($handle, Csv::fila([$r->nombre, $r->rol_nombre, $r->dias_asistidos, $r->horas_reales, $r->horas_teoricas, $r->productividad]), ';');
         }
 
         fputcsv($handle, [], ';');
         fputcsv($handle, ['RESUMEN DIARIO'], ';');
         fputcsv($handle, ['Fecha', 'Total', 'Presentes', 'Tardes', 'Inasistentes', 'Apoyo Sábado'], ';');
         foreach ($resumenDiario as $d) {
-            fputcsv($handle, [$d->fecha, $d->total_registros, $d->presentes, $d->tardes, $d->inasistentes, $d->apoyos_sabado], ';');
+            fputcsv($handle, Csv::fila([$d->fecha, $d->total_registros, $d->presentes, $d->tardes, $d->inasistentes, $d->apoyos_sabado]), ';');
         }
 
         rewind($handle);

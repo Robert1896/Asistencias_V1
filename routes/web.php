@@ -51,20 +51,21 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     // Justificaciones del empleado
     Route::get('mis-justificaciones', [JustificacionController::class, 'index'])->name('justificaciones');
     Route::post('justificar/{asistencia}', [JustificacionController::class, 'solicitar'])->name('justificaciones.solicitar');
+    Route::get('justificaciones/archivo/{asistencia}', [JustificacionController::class, 'archivo'])->name('justificaciones.archivo');
 
     // Estación de chequeo
     Route::middleware('can:estacion_operar')->group(function () {
         Route::get('estacion', [EstacionController::class, 'index'])->name('estacion.index');
-        Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar');
-        Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc');
+        Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar')->middleware('throttle:60,1');
+        Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc')->middleware('throttle:60,1');
     });
     Route::get('estacion/manual', [EstacionController::class, 'registroManual'])->name('estacion.manual')->middleware('can:asistencias_registrar');
-    Route::post('estacion/manual', [EstacionController::class, 'registrarManual'])->name('estacion.registrar')->middleware('can:asistencias_registrar');
+    Route::post('estacion/manual', [EstacionController::class, 'registrarManual'])->name('estacion.registrar')->middleware(['can:asistencias_registrar', 'throttle:30,1']);
     Route::get('estacion/buscar', [EstacionController::class, 'buscarEmpleado'])->name('estacion.buscar')->middleware('can:asistencias_registrar');
 
     // Escaneo de salón por el docente
     Route::get('mi-escanear-salon', [EstacionController::class, 'escanearSalon'])->name('docente.escanear.salon');
-    Route::post('estacion/salon-qr', [EstacionController::class, 'procesarSalonQr'])->name('estacion.salon-qr');
+    Route::post('estacion/salon-qr', [EstacionController::class, 'procesarSalonQr'])->name('estacion.salon-qr')->middleware('throttle:60,1');
 
     // Panel del docente
     Route::get('mi-dashboard', [\App\Http\Controllers\Empleado\DashboardController::class, 'index'])->name('empleado.dashboard');
@@ -77,7 +78,7 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::get('usuarios', [UsuarioController::class, 'index'])->name('admin.usuarios');
         Route::middleware('can:usuarios_crear')->group(function () {
             Route::post('usuarios', [UsuarioController::class, 'store'])->name('admin.usuarios.store');
-            Route::post('usuarios/importar', [UsuarioController::class, 'importar'])->name('admin.usuarios.importar');
+            Route::post('usuarios/importar', [UsuarioController::class, 'importar'])->name('admin.usuarios.importar')->middleware('throttle:10,1');
         });
         Route::put('usuarios/{usuario}', [UsuarioController::class, 'update'])->name('admin.usuarios.update')->middleware('can:usuarios_editar');
         Route::patch('usuarios/{usuario}/toggle-estatus', [UsuarioController::class, 'toggleEstatus'])->name('admin.usuarios.toggle')->middleware('can:usuarios_editar');
@@ -120,7 +121,7 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::delete('salones/asignaciones/limpiar', [SalonController::class, 'limpiarAsignaciones'])
             ->middleware(['can:salones_eliminar', 'throttle:5,60'])
             ->name('admin.salones.limpiar');
-        Route::post('salones/importar', [SalonController::class, 'importar'])->name('admin.salones.importar')->middleware('can:salones_editar');
+        Route::post('salones/importar', [SalonController::class, 'importar'])->name('admin.salones.importar')->middleware(['can:salones_editar', 'throttle:10,1']);
         Route::get('salones/plantilla', [SalonController::class, 'plantilla'])->name('admin.salones.plantilla')->middleware('can:salones_ver');
         Route::get('salones/ocupacion', [SalonController::class, 'ocupacion'])->name('admin.salones.ocupacion')->middleware('can:salones_ver');
         Route::post('salones/ocupacion/data', [SalonController::class, 'ocupacionData'])->name('admin.salones.ocupacion.data')->middleware('can:salones_ver');
@@ -153,5 +154,5 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     Route::get('mi-qr-dinamico', [QrController::class, 'showPage'])->name('qr.dinamico.page');
     Route::get('qr/{user}', [QrController::class, 'show'])->name('qr.show');
     Route::get('qr/{user}/dinamico', [QrController::class, 'qrDinamico'])->name('qr.dinamico');
-    Route::post('qr/{user}/token', [QrController::class, 'generarToken'])->name('qr.token');
+    Route::post('qr/{user}/token', [QrController::class, 'generarToken'])->name('qr.token')->middleware('throttle:30,1');
 });

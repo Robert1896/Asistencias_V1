@@ -3,7 +3,9 @@
 use App\Http\Middleware\ApiAdminOnly;
 use App\Http\Middleware\DocenteSessionTimeout;
 use App\Http\Middleware\NoCacheHeaders;
+use App\Http\Middleware\RegistrarAccesoDenegado;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SesionAbsoluta;
 use App\Http\Middleware\W3cCompliance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,9 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
         $middleware->append(W3cCompliance::class);
+        $middleware->append(RegistrarAccesoDenegado::class);
         $middleware->web(append: [
             DocenteSessionTimeout::class,
             \App\Http\Middleware\VerificarEstatusActivo::class,
+            SesionAbsoluta::class,
         ]);
         $middleware->alias([
             'no-cache' => NoCacheHeaders::class,

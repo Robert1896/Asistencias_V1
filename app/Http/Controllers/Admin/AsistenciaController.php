@@ -79,7 +79,7 @@ class AsistenciaController extends Controller
         if ($data['justificado'] === 'Si') {
             $filePath = null;
             if ($request->hasFile('archivo')) {
-                $filePath = $request->file('archivo')->store('justificaciones', 'public');
+                $filePath = $request->file('archivo')->store('justificaciones', 'local');
             }
 
             $asistencia->update([
@@ -89,7 +89,7 @@ class AsistenciaController extends Controller
             ]);
         } else {
             if ($asistencia->archivo_justificacion) {
-                Storage::disk('public')->delete($asistencia->archivo_justificacion);
+                Storage::disk('local')->delete($asistencia->archivo_justificacion);
             }
 
             $asistencia->update([

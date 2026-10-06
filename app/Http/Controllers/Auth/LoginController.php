@@ -73,6 +73,7 @@ class LoginController extends Controller
         Auth::login($user, $request->boolean('remember'));
 
         $request->session()->regenerate();
+        $request->session()->put('sesion_iniciada_en', now()->timestamp);
 
         ActivityLog::log('login', "Inicio de sesión exitoso: " . ($user->cedula ?? $user->email), 'auth', [
             'login'   => $login,

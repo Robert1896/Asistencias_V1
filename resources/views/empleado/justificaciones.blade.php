@@ -120,7 +120,7 @@
                         <td class="small">{{ Str::limit($h->texto_justificacion, 60) }}</td>
                         <td>
                             @if ($h->archivo_justificacion)
-                                <a href="{{ Storage::disk('public')->url($h->archivo_justificacion) }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                <a href="{{ route('justificaciones.archivo', $h) }}" target="_blank" class="btn btn-outline-secondary btn-sm">
                                     <i class="bi bi-file-earmark"></i>
                                 </a>
                             @else

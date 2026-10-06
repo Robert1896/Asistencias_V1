@@ -320,7 +320,7 @@ class SalonController extends Controller
                 $output = fopen('php://temp', 'r+');
                 fwrite($output, "\xEF\xBB\xBF");
                 foreach ($csvRows as $csvRow) {
-                    fputcsv($output, $csvRow, ';');
+                    fputcsv($output, \App\Support\Csv::fila($csvRow), ';');
                 }
                 rewind($output);
                 $csvContent = stream_get_contents($output);

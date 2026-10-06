@@ -38,6 +38,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Absolute Session Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Tiempo máximo total (en minutos) que una sesión puede estar activa sin
+    | importar la actividad del usuario. Al superarlo se fuerza el cierre.
+    |
+    */
+
+    'absolute_timeout' => (int) env('SESSION_ABSOLUTE_TIMEOUT', 480),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Encryption
     |--------------------------------------------------------------------------
     |
