@@ -91,6 +91,9 @@ class UsuarioController extends Controller
             return back()->with('error', 'No puedes cambiar tu propio estatus.');
         }
 
+        // Una cuenta Superadmin solo puede ser modificada por otra Superadmin (CWE-269)
+        abort_if((int) $usuario->rol_id === 1 && (int) auth()->user()->rol_id !== 1, 403);
+
         $nuevoEstatus = $usuario->estatus === 'activo' ? 'inactivo' : 'activo';
         $usuario->update(['estatus' => $nuevoEstatus]);
 
@@ -115,6 +118,9 @@ class UsuarioController extends Controller
         if ($usuario->id === auth()->id()) {
             return back()->with('error', 'No puedes eliminarte a ti mismo.');
         }
+
+        // Una cuenta Superadmin solo puede ser modificada por otra Superadmin (CWE-269)
+        abort_if((int) $usuario->rol_id === 1 && (int) auth()->user()->rol_id !== 1, 403);
 
         $email = $usuario->email;
         $usuario->delete();

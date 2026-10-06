@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Rol;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * @property string $nombre
@@ -27,8 +29,20 @@ class StoreUserRequest extends FormRequest
             'cedula'   => 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
             'email'    => 'required|email|max:120|unique:users,email',
             'password' => 'required|string|min:8|max:72|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
-            'rol_id'   => 'required|integer|exists:roles,id',
+            'rol_id'   => ['required', 'integer', 'exists:roles,id', Rule::in($this->rolesAsignables())],
         ];
+    }
+
+    /**
+     * Solo el Superadmin puede asignar el rol Superadmin (CWE-269).
+     */
+    private function rolesAsignables(): array
+    {
+        $actor = auth()->user();
+
+        return $actor && (int) $actor->rol_id === 1
+            ? Rol::pluck('id')->all()
+            : Rol::where('id', '!=', 1)->pluck('id')->all();
     }
 
     public function messages(): array

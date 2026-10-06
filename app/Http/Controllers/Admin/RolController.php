@@ -24,6 +24,13 @@ class RolController extends Controller
 
     public function updatePermisos(Request $request, Rol $rol): RedirectResponse
     {
+        $actor = auth()->user();
+
+        // Solo el Superadmin puede modificar el rol Superadmin, y nadie edita su propio rol
+        // (evita autopromoción de permisos: CWE-269/863)
+        abort_if($rol->id === 1 && $actor->rol_id !== 1, 403);
+        abort_if($rol->id === $actor->rol_id, 403);
+
         $data = $request->validate([
             'permisos'   => 'nullable|array',
             'permisos.*' => 'integer|exists:permisos,id',

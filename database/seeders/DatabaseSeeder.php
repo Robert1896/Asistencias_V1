@@ -75,14 +75,19 @@ class DatabaseSeeder extends Seeder
 
         // ─── Usuario admin (solo si no existe) ────────────
         if (!DB::table('users')->where('email', 'admin@universidad.edu')->exists()) {
+            $passwordAdmin = bin2hex(random_bytes(16));
+
             DB::table('users')->insert([
-                'password'           => Hash::make('Admin123!', ['rounds' => 12]),
+                'password'           => Hash::make($passwordAdmin, ['rounds' => 12]),
                 'nombre_completo'    => 'Super Administrador',
                 'email'              => 'admin@universidad.edu',
                 'rol_id'             => 1,
                 'estatus'            => 'activo',
                 'codigo_qr_estatico' => Str::uuid()->toString(),
             ]);
+
+            $this->command->warn('Superadmin creado: admin@universidad.edu');
+            $this->command->warn('Contraseña (se muestra UNA sola vez): ' . $passwordAdmin);
         }
 
         // ─── Departamentos (para asistencia ad-hoc) ───────

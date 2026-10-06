@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Rol;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * @property string $nombre
@@ -16,21 +18,48 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $usuario = $this->route('usuario');
+        $actor   = auth()->user();
+
+        if (!$usuario || !$actor) {
+            return false;
+        }
+
+        // Una cuenta Superadmin solo puede ser editada por otra Superadmin (CWE-269)
+        return !((int) $usuario->rol_id === 1 && (int) $actor->rol_id !== 1);
     }
 
     public function rules(): array
     {
         $usuarioId = $this->route('usuario')->id;
 
-        return [
+        $rules = [
             'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
             'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
             'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$usuarioId}",
             'email'    => "required|email|max:120|unique:users,email,{$usuarioId}",
-            'rol_id'   => 'required|integer|exists:roles,id',
+            'rol_id'   => ['required', 'integer', 'exists:roles,id', Rule::in($this->rolesAsignables())],
             'password' => 'nullable|string|min:8|max:72|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
         ];
+
+        // Nadie puede cambiar su propio rol (evita autopromoción, CWE-269)
+        if ((int) $this->route('usuario')->id === (int) auth()->id()) {
+            $rules['rol_id'][] = Rule::in([(int) $this->route('usuario')->rol_id]);
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Solo el Superadmin puede asignar el rol Superadmin (CWE-269).
+     */
+    private function rolesAsignables(): array
+    {
+        $actor = auth()->user();
+
+        return $actor && (int) $actor->rol_id === 1
+            ? Rol::pluck('id')->all()
+            : Rol::where('id', '!=', 1)->pluck('id')->all();
     }
 
     public function messages(): array

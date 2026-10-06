@@ -71,7 +71,9 @@
                             <select name="rol_id" class="form-select form-select-sm" required>
                                 <option value="">Seleccionar rol...</option>
                                 @foreach ($roles as $rol)
-                                    <option value="{{ $rol->id }}" {{ old('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                                    @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
+                                        <option value="{{ $rol->id }}" {{ old('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                             <div style="height:22px;"></div>
@@ -239,7 +241,9 @@
                                     <label class="form-label small text-muted" for="editRol{{ $u->id }}">Rol</label>
                                     <select name="rol_id" id="editRol{{ $u->id }}" class="form-select form-select-sm" required>
                                         @foreach ($roles as $rol)
-                                            <option value="{{ $rol->id }}" {{ $rol->id === $u->rol_id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                                            @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
+                                                <option value="{{ $rol->id }}" {{ $rol->id === $u->rol_id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                                            @endif
                                         @endforeach
                                     </select>
                                 </div>

@@ -83,9 +83,7 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::patch('usuarios/{usuario}/toggle-estatus', [UsuarioController::class, 'toggleEstatus'])->name('admin.usuarios.toggle')->middleware('can:usuarios_editar');
         Route::delete('usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('admin.usuarios.destroy')->middleware('can:usuarios_eliminar');
 
-        // Roles
-        Route::get('roles', [RolController::class, 'index'])->name('admin.roles');
-        Route::put('roles/{rol}/permisos', [RolController::class, 'updatePermisos'])->name('admin.roles.permisos');
+        // Roles (protegidos con permisos propios: roles_ver / roles_editar)
 
         // Horarios (admin)
         Route::get('horarios/{usuario}/editar', [HorarioController::class, 'edit'])->name('admin.horarios.edit');
@@ -145,8 +143,10 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::delete('materias/{carga}', [CargaAcademicaController::class, 'destroy'])->name('admin.materias.destroy');
     });
 
-    // Accesos compartidos (usuarios_ver O permiso específico)
+    // Accesos compartidos (permiso específico por módulo)
     Route::prefix('admin')->group(function () {
+        Route::get('roles', [RolController::class, 'index'])->name('admin.roles')->middleware('can:roles_ver');
+        Route::put('roles/{rol}/permisos', [RolController::class, 'updatePermisos'])->name('admin.roles.permisos')->middleware('can:roles_editar');
         Route::get('horarios', [HorarioController::class, 'index'])->name('admin.horarios')->middleware('can:horarios_ver');
         Route::get('asistencias', [AsistenciaController::class, 'index'])->name('admin.asistencias')->middleware('can:asistencias_ver');
         Route::put('asistencias/{asistencia}/justificar', [AsistenciaController::class, 'justificar'])->name('admin.asistencias.justificar')->middleware('can:asistencias_justificar');

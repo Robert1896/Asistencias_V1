@@ -81,9 +81,9 @@ http://localhost/asistencias_v1/public
 
 ## Credenciales de acceso
 
-| Usuario | Contraseña | Rol |
-|---------|-----------|-----|
-| `admin@universidad.edu` | `Admin123!` | Superadmin |
+Al ejecutar `php artisan db:seed` se crea el Superadmin `admin@universidad.edu` con una
+**contraseña aleatoria que se imprime una sola vez en la consola**. Guardarla de inmediato
+y cambiarla tras el primer inicio. Por seguridad no está documentada en ningún archivo.
 
 ## Módulos del sistema
 

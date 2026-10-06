@@ -175,8 +175,10 @@ class ImportService
             $nombre    = trim($row[$nombreIdx] ?? '');
             $apellido  = trim($row[$apellidoIdx] ?? '');
             $email     = trim($row[$emailIdx] ?? '');
-            $cedula    = trim($row[$cedulaIdx] ?? '') ?: null;
-            $rolNombre = trim($row[$rolIdx] ?? 'Docente');
+            $cedula    = $cedulaIdx !== false ? trim((string) ($row[$cedulaIdx] ?? '')) : '';
+            $rolNombre = ($rolIdx !== false && trim((string) ($row[$rolIdx] ?? '')) !== '')
+                ? trim($row[$rolIdx])
+                : 'Docente';
 
             if (!$nombre || mb_strlen($nombre) > 80) {
                 $errores[] = "Fila " . ($i + 2) . ": nombre vacío o excede 80 caracteres.";
@@ -208,7 +210,7 @@ class ImportService
                 continue;
             }
 
-            $finalPassword = $passwordIdx !== null && trim($row[$passwordIdx] ?? '') !== ''
+            $finalPassword = ($passwordIdx !== false && trim((string) ($row[$passwordIdx] ?? '')) !== '')
                 ? trim($row[$passwordIdx])
                 : self::generarPasswordSegura(16);
 
@@ -218,6 +220,12 @@ class ImportService
             }
 
             $rol = Rol::where('nombre', $rolNombre)->first() ?? Rol::where('id', 3)->first();
+
+            // El rol Superadmin no puede asignarse vía importación (CWE-269)
+            if ((int) $rol->id === 1) {
+                $errores[] = "Fila " . ($i + 2) . ": el rol 'Superadmin' no puede asignarse por importación.";
+                continue;
+            }
 
             User::create([
                 'nombre'             => strip_tags($nombre),
