@@ -75,6 +75,28 @@ class AttendanceService
         $hoy      = today()->toDateString();
         $horaAhora = now()->format('H:i:s');
 
+        // Feature B: primer registro del día del docente debe hacerse en la estación principal
+        // Solo aplica a docentes (rol_id 3). Se rechaza si no existe ninguna asistencia para ese usuario en la fecha actual.
+        if ((int) $usuario->rol_id === 3) {
+            $tieneAsistenciaHoy = Asistencia::where('usuario_id', $usuario->id)
+                ->where('fecha', $hoy)
+                ->exists();
+
+            if (!$tieneAsistenciaHoy) {
+                $logData = ['user_id' => $usuario->id];
+                if ($ip) {
+                    $logData['ip'] = $ip;
+                }
+                ActivityLog::log('asistencia_rechazada', "Primer registro del día fuera de estación: {$usuario->email}", 'asistencia', $logData);
+
+                return [
+                    'ok'      => false,
+                    'mensaje' => 'Su primer registro del día debe realizarlo en la estación principal.',
+                    'tipo'    => 'error',
+                ];
+            }
+        }
+
         $this->autoCerrarSalidaAnterior($usuario);
 
         $salon = Salon::where('codigo_qr', $salonCodigo)->orWhere('codigo', $salonCodigo)->first();

@@ -6,6 +6,7 @@ use App\Http\Middleware\NoCacheHeaders;
 use App\Http\Middleware\RegistrarAccesoDenegado;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SesionAbsoluta;
+use App\Http\Middleware\VerificarEstacionCentral;
 use App\Http\Middleware\W3cCompliance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'no-cache' => NoCacheHeaders::class,
             'api.admin' => ApiAdminOnly::class,
+            'estacion.central' => VerificarEstacionCentral::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

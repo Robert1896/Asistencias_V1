@@ -94,6 +94,17 @@
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function() {
+    window.estacionGPS = { lat: null, lng: null, activo: false };
+
+    var requiereGps = {{ ($estacionCentral->activo && in_array($estacionCentral->modo, ['gps', 'ambos'], true)) ? 'true' : 'false' }};
+    if (requiereGps && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            window.estacionGPS.lat = pos.coords.latitude;
+            window.estacionGPS.lng = pos.coords.longitude;
+            window.estacionGPS.activo = true;
+        }, function () {}, {enableHighAccuracy: true, timeout: 12000, maximumAge: 0});
+    }
+
     const inputBusqueda = document.getElementById('busqueda');
     const resultadosDiv = document.getElementById('resultadosBusqueda');
     const empleadoSeleccionado = document.getElementById('empleadoSeleccionado');
@@ -114,8 +125,19 @@ document.addEventListener('DOMContentLoaded', function() {
         debounceTimer = setTimeout(() => buscarEmpleado(q), 300);
     });
 
+    function prepararHeaders() {
+        var headers = {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'};
+        if (window.estacionGPS && window.estacionGPS.lat !== null && window.estacionGPS.lng !== null) {
+            headers['X-Geo-Lat'] = window.estacionGPS.lat.toFixed(7);
+            headers['X-Geo-Lng'] = window.estacionGPS.lng.toFixed(7);
+        }
+        return headers;
+    }
+
     function buscarEmpleado(q) {
-        fetch('{{ route("estacion.buscar") }}?q=' + encodeURIComponent(q))
+        const url = new URL('{{ route("estacion.buscar") }}', window.location.origin);
+        url.searchParams.set('q', q);
+        fetch(url.toString(), { headers: prepararHeaders() })
             .then(r => r.json())
             .then(data => {
                 resultadosDiv.innerHTML = '';
@@ -159,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fetch('{{ route("estacion.registrar") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            headers: prepararHeaders(),
             body: JSON.stringify({ empleado_id: empleadoActual.id, tipo: tipo })
         })
         .then(r => r.json())

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BitacoraController;
 use App\Http\Controllers\Admin\CargaAcademicaController;
 use App\Http\Controllers\Admin\CorreoConfigController;
 use App\Http\Controllers\Admin\DocenteHorarioController;
+use App\Http\Controllers\Admin\EstacionCentralController;
 use App\Http\Controllers\Admin\HorarioController;
 use App\Http\Controllers\Admin\FeriadoController;
 use App\Http\Controllers\Admin\ReporteController;
@@ -53,15 +54,15 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     Route::post('justificar/{asistencia}', [JustificacionController::class, 'solicitar'])->name('justificaciones.solicitar');
     Route::get('justificaciones/archivo/{asistencia}', [JustificacionController::class, 'archivo'])->name('justificaciones.archivo');
 
-    // Estación de chequeo
+    // Estación de chequeo (sujeta a verificación de estación central)
     Route::middleware('can:estacion_operar')->group(function () {
-        Route::get('estacion', [EstacionController::class, 'index'])->name('estacion.index');
-        Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar')->middleware('throttle:60,1');
-        Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc')->middleware('throttle:60,1');
+        Route::get('estacion', [EstacionController::class, 'index'])->name('estacion.index')->middleware('estacion.central');
+        Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar')->middleware(['estacion.central', 'throttle:60,1']);
+        Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc')->middleware(['estacion.central', 'throttle:60,1']);
     });
-    Route::get('estacion/manual', [EstacionController::class, 'registroManual'])->name('estacion.manual')->middleware('can:asistencias_registrar');
-    Route::post('estacion/manual', [EstacionController::class, 'registrarManual'])->name('estacion.registrar')->middleware(['can:asistencias_registrar', 'throttle:30,1']);
-    Route::get('estacion/buscar', [EstacionController::class, 'buscarEmpleado'])->name('estacion.buscar')->middleware('can:asistencias_registrar');
+    Route::get('estacion/manual', [EstacionController::class, 'registroManual'])->name('estacion.manual')->middleware(['can:asistencias_registrar', 'estacion.central']);
+    Route::post('estacion/manual', [EstacionController::class, 'registrarManual'])->name('estacion.registrar')->middleware(['can:asistencias_registrar', 'estacion.central', 'throttle:30,1']);
+    Route::get('estacion/buscar', [EstacionController::class, 'buscarEmpleado'])->name('estacion.buscar')->middleware(['can:asistencias_registrar', 'estacion.central']);
 
     // Escaneo de salón por el docente
     Route::get('mi-escanear-salon', [EstacionController::class, 'escanearSalon'])->name('docente.escanear.salon');
@@ -137,6 +138,10 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::get('correo', [CorreoConfigController::class, 'index'])->name('admin.correo')->middleware('can:correo_editar');
         Route::put('correo', [CorreoConfigController::class, 'update'])->name('admin.correo.update')->middleware('can:correo_editar');
         Route::post('correo/probar', [CorreoConfigController::class, 'probar'])->name('admin.correo.probar')->middleware('can:correo_editar');
+
+        // Estación central
+        Route::get('estacion-central', [EstacionCentralController::class, 'edit'])->name('admin.estacion.central')->middleware('can:estacion_configurar');
+        Route::put('estacion-central', [EstacionCentralController::class, 'update'])->name('admin.estacion.central.update')->middleware('can:estacion_configurar');
 
         // Días feriados
         Route::get('feriados', [FeriadoController::class, 'index'])->name('admin.feriados')->middleware('can:feriados_editar');

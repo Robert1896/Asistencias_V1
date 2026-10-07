@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 19, 'codigo' => 'correo_editar',       'nombre' => 'Configurar correo SMTP',         'modulo' => 'correo'],
             ['id' => 20, 'codigo' => 'feriados_editar',     'nombre' => 'Gestionar días feriados',        'modulo' => 'feriados'],
             ['id' => 21, 'codigo' => 'materias_editar',     'nombre' => 'Gestionar materias',             'modulo' => 'materias'],
+            ['id' => 22, 'codigo' => 'estacion_configurar', 'nombre' => 'Configurar estación central',    'modulo' => 'estacion'],
         ]);
 
         // ─── Rol_Permiso ───────────────────────────────

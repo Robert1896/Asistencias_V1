@@ -98,6 +98,9 @@
                                 @can('correo_editar')
                                     <li><a class="dropdown-item" href="{{ route('admin.correo') }}"><i class="bi bi-envelope-gear me-2"></i>Correo</a></li>
                                 @endcan
+                                @can('estacion_configurar')
+                                    <li><a class="dropdown-item" href="{{ route('admin.estacion.central') }}"><i class="bi bi-geo-alt me-2"></i>Estación Central</a></li>
+                                @endcan
                                 <li><hr class="dropdown-divider"></li>
                                 <li><small class="dropdown-header text-uppercase">Cuenta</small></li>
                                 <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-pencil-square me-2"></i>Mi Perfil</a></li>
@@ -190,6 +193,9 @@
                     @endcan
                     @can('correo_editar')
                         <a class="offcanvas-nav-link" href="{{ route('admin.correo') }}"><i class="bi bi-envelope-gear"></i>Correo</a>
+                    @endcan
+                    @can('estacion_configurar')
+                        <a class="offcanvas-nav-link" href="{{ route('admin.estacion.central') }}"><i class="bi bi-geo-alt"></i>Estación Central</a>
                     @endcan
                 @endif
             </nav>

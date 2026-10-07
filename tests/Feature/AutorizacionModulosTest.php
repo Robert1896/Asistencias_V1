@@ -225,11 +225,12 @@ class AutorizacionModulosTest extends TestCase
 
     public function test_seeder_crea_permisos_nuevos_y_rol1_los_recibe_todos(): void
     {
-        $this->assertSame(21, DB::table('permisos')->count());
+        $this->assertSame(22, DB::table('permisos')->count());
 
         foreach ([
             'salones_crear', 'salones_editar', 'salones_eliminar',
             'bitacora_ver', 'correo_editar', 'feriados_editar', 'materias_editar',
+            'estacion_configurar',
         ] as $codigo) {
             $this->assertNotNull(
                 DB::table('permisos')->where('codigo', $codigo)->first(),
@@ -237,7 +238,7 @@ class AutorizacionModulosTest extends TestCase
             );
         }
 
-        $this->assertSame(21, DB::table('rol_permiso')->where('rol_id', 1)->count());
+        $this->assertSame(22, DB::table('rol_permiso')->where('rol_id', 1)->count());
     }
 
     public function test_matriz_por_defecto_no_amplia_roles_2_3_4(): void

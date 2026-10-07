@@ -115,6 +115,41 @@
     var html5QrCode = null, bloqueado = false, camaraActiva = false;
     var MAX_ULTIMOS = 10;
 
+    window.estacionGPS = { lat: null, lng: null, activo: false };
+
+    function prepararHeaders(adicionales) {
+        var headers = {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'};
+        if (adicionales) Object.assign(headers, adicionales);
+        if (window.estacionGPS && window.estacionGPS.lat !== null && window.estacionGPS.lng !== null) {
+            headers['X-Geo-Lat'] = window.estacionGPS.lat.toFixed(7);
+            headers['X-Geo-Lng'] = window.estacionGPS.lng.toFixed(7);
+        }
+        return headers;
+    }
+
+    function solicitarUbicacion() {
+        return new Promise(function (resolve, reject) {
+            if (!navigator.geolocation) {
+                return reject('geolocation_no_disponible');
+            }
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                window.estacionGPS.lat = pos.coords.latitude;
+                window.estacionGPS.lng = pos.coords.longitude;
+                window.estacionGPS.activo = true;
+                resolve(pos);
+            }, function (err) {
+                reject(err);
+            }, {enableHighAccuracy: true, timeout: 12000, maximumAge: 0});
+        });
+    }
+
+    var requiereGps = {{ ($estacionCentral->activo && in_array($estacionCentral->modo, ['gps', 'ambos'], true)) ? 'true' : 'false' }};
+    if (requiereGps) {
+        solicitarUbicacion().catch(function () {
+            mostrarEstado('La estación requiere verificar su ubicación. Habilite la permisión de GPS (icono de candado en la barra de direcciones) y recargue la página.', 'warning');
+        });
+    }
+
     function actualizarUI(encendida) {
         camaraActiva = encendida;
         if (encendida) {
@@ -179,7 +214,7 @@
 
         fetch('{{ route("estacion.procesar") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            headers: prepararHeaders(),
             body: JSON.stringify({ qr_hash: decodedText })
         })
         .then(function(r) { return r.json(); })
@@ -301,7 +336,7 @@
 
         fetch('{{ route("estacion.adhoc") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            headers: prepararHeaders(),
             body: JSON.stringify(body)
         })
         .then(function(r) { return r.json(); })

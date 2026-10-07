@@ -29,7 +29,8 @@ class EstacionController extends Controller
 
     public function index()
     {
-        return view('estacion.index');
+        $estacionCentral = \App\Models\EstacionCentral::obtener();
+        return view('estacion.index', compact('estacionCentral'));
     }
 
     private function verificarDiaHabil(): ?JsonResponse
@@ -289,7 +290,8 @@ class EstacionController extends Controller
     public function registroManual()
     {
         $departamentos = Departamento::orderBy('nombre')->get();
-        return view('estacion.manual', compact('departamentos'));
+        $estacionCentral = \App\Models\EstacionCentral::obtener();
+        return view('estacion.manual', compact('departamentos', 'estacionCentral'));
     }
 
     public function buscarEmpleado(Request $request): JsonResponse
