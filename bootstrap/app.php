@@ -11,7 +11,9 @@ use App\Http\Middleware\W3cCompliance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,6 +21,38 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            Route::get('diag-db', function (\Illuminate\Http\Request $request) {
+                $secret = (string) config('app.cron_secret');
+                abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
+
+                $caEnv = env('MYSQL_ATTR_SSL_CA');
+                $base = [
+                    'default'       => config('database.default'),
+                    'host'          => config('database.connections.mysql.host'),
+                    'port'          => config('database.connections.mysql.port'),
+                    'database'      => config('database.connections.mysql.database'),
+                    'username'      => config('database.connections.mysql.username'),
+                    'ssl_ca_env'    => $caEnv,
+                    'ssl_ca_exists' => $caEnv ? file_exists($caEnv) : false,
+                    'base_path'     => base_path(),
+                    'ca_in_base'    => file_exists(base_path('ca.pem')),
+                ];
+
+                try {
+                    DB::connection()->getPdo();
+                    $info = DB::select('select database() as db, current_user() as usr, version() as ver');
+
+                    return response()->json(array_merge($base, ['ok' => true, 'info' => $info]));
+                } catch (\Throwable $e) {
+                    return response()->json(array_merge($base, [
+                        'ok'      => false,
+                        'class'   => get_class($e),
+                        'message' => $e->getMessage(),
+                    ]), 500);
+                }
+            });
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
