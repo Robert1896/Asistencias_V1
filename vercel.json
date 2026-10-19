@@ -1,0 +1,42 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "framework": null,
+    "buildCommand": "npm ci && npm run build && node scripts/prepare-dist.mjs",
+    "outputDirectory": "dist",
+    "functions": {
+        "api/index.php": {
+            "runtime": "vercel-php@0.8.0",
+            "memory": 1024,
+            "maxDuration": 60
+        }
+    },
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/api/index.php"
+        }
+    ],
+    "crons": [
+        {
+            "path": "/cron/mark-absents",
+            "schedule": "0 23 * * *"
+        }
+    ],
+    "env": {
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
+        "LOG_CHANNEL": "stderr",
+        "ASSET_URL": "/",
+        "SESSION_DRIVER": "database",
+        "SESSION_ENCRYPT": "true",
+        "SESSION_ABSOLUTE_TIMEOUT": "480",
+        "CACHE_STORE": "database",
+        "QUEUE_CONNECTION": "database",
+        "VIEW_COMPILED_PATH": "/tmp/views",
+        "APP_CONFIG_CACHE": "/tmp/config.php",
+        "APP_EVENTS_CACHE": "/tmp/events.php",
+        "APP_PACKAGES_CACHE": "/tmp/packages.php",
+        "APP_ROUTES_CACHE": "/tmp/routes.php",
+        "APP_SERVICES_CACHE": "/tmp/services.php"
+    }
+}

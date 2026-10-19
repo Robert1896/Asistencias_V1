@@ -38,6 +38,38 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware(['auth', '
 
 /*
 |--------------------------------------------------------------------------
+| Tareas programadas (Vercel Cron / invocación manual)
+|--------------------------------------------------------------------------
+| Vercel no ejecuta el scheduler de Laravel; estas rutas exponen los
+| comandos y quedan protegidas por el header "Authorization: Bearer
+| {CRON_SECRET}". Configurar CRON_SECRET en las variables de entorno.
+*/
+Route::get('cron/mark-absents', function (\Illuminate\Http\Request $request) {
+    $secret = (string) config('app.cron_secret');
+    abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
+
+    \Illuminate\Support\Facades\Artisan::call('app:mark-absents');
+
+    return response()->json([
+        'ok'     => true,
+        'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+    ]);
+})->name('cron.mark-absents');
+
+Route::get('cron/migrate', function (\Illuminate\Http\Request $request) {
+    $secret = (string) config('app.cron_secret');
+    abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
+
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+
+    return response()->json([
+        'ok'     => true,
+        'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+    ]);
+})->name('cron.migrate');
+
+/*
+|--------------------------------------------------------------------------
 | Zona autenticada
 |--------------------------------------------------------------------------
 */

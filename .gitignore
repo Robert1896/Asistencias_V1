@@ -14,6 +14,7 @@ yarn-error.log
 /storage/logs/*.log
 /public/build/
 /public/hot
+/dist/
 /public/storage
 /storage/framework/cache/data/*
 /storage/framework/sessions/*

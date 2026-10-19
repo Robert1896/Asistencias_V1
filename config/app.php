@@ -107,6 +107,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cron Secret
+    |--------------------------------------------------------------------------
+    |
+    | Secreto compartido para invocar las tareas programadas expuestas como
+    | rutas /cron/* (Vercel no ejecuta el scheduler de Laravel). Vercel Cron
+    | envía el header "Authorization: Bearer {CRON_SECRET}".
+    |
+    */
+
+    'cron_secret' => env('CRON_SECRET'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |

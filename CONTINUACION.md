@@ -31,6 +31,7 @@ fa5c109  Fase D  — composer update (29→0 avisos), SRI, CORS, cache QR privad
 30bfd19  Fase F  — auditoría final (AUDITORIA_OWASP.md) + esta documentación
 9400e11  Estación Central — verificación red/GPS, middleware, panel admin, rechazo primer registro
 b403072  QR admin + nonce CSP + dropdown scroll + test QrShowTest
+795043b  Vercel — api/index.php, vercel.json, prepare-dist, cron, trustProxies
 ```
 
 ### Trabajo posterior a la auditoría
@@ -48,15 +49,17 @@ Regla: crear un respaldo nuevo antes de cada tanda de cambios; no reutilizar.
 C:\xampp\htdocs\backups_asistencias_v1\
 ├── 20261005_135949\
 ├── 20261006_002201\   (Fase anterior: 256 archivos + qr_asistencia.sql)
-└── 20261006_131010\   (Fase 0 — respaldo actual; SQL copiado del anterior)
+├── 20261006_131010\   (Fase 0)
+├── 20261006_152226\   (tanda estación/QR previa)
+└── 20261019_103758\   (respaldo actual: 292 archivos + qr_asistencia.sql)
 ```
 
-**Para restaurar (si el usuario lo pide):** "restaurar el respaldo 20261006_002201".
+**Para restaurar (si el usuario lo pide):** "restaurar el respaldo 20261019_103758".
 
-**PENDIENTE:** MySQL/XAMPP está apagado desde antes de la Fase 0 — el dump `qr_asistencia.sql` del respaldo actual es el de ayer. Cuando XAMPP esté corriendo, refrescar con:
+**PENDIENTE:** MySQL/XAMPP está apagado — el dump `qr_asistencia.sql` se copió del respaldo anterior. Cuando XAMPP esté corriendo, refrescar con:
 
 ```powershell
-& 'C:\xampp\mysql\bin\mysqldump.exe' -uroot --single-transaction --routines --triggers qr_asistencia > C:\xampp\htdocs\backups_asistencias_v1\20261006_131010\qr_asistencia.sql
+& 'C:\xampp\mysql\bin\mysqldump.exe' -uroot --single-transaction --routines --triggers qr_asistencia > C:\xampp\htdocs\backups_asistencias_v1\20261019_103758\qr_asistencia.sql
 ```
 
 ---
@@ -82,6 +85,36 @@ Ver `AUDITORIA_OWASP.md` para la matriz completa. En corto:
 
 - Refrescar dump de MySQL (arriba).
 - **SRI:** si se cambia/versiona un recurso CDN en las vistas, recalcular `sha384` o el navegador bloqueará la carga. Ver `tests/Feature/FaseDHardeningTest.php` (exige SRI a todo script/link CDN remoto).
+
+---
+
+## Despliegue en Vercel (en preparación)
+
+Vercel no ejecuta PHP nativo: se usa el runtime comunitario **`vercel-php`**. El error `STATIC_BUILD_NO_OUT_DIR` pasó porque Vercel detectó `package.json` + `vite build` y esperaba una carpeta `dist` (laravel-vite emite en `public/build`).
+
+Archivos añadidos:
+
+| Archivo | Rol |
+|---|---|
+| `api/index.php` | Forwarder a `public/index.php` (entrypoint de la función) |
+| `vercel.json` | `framework: null`; build `npm ci && npm run build && node scripts/prepare-dist.mjs`; `outputDirectory: dist`; función `api/index.php` con `vercel-php@0.8.0` (PHP 8.4); rewrite total a la función; cron; env no secretas |
+| `.vercelignore` | No sube `vendor`, `node_modules`, `tests`, `storage/logs`, `.env`, `dist`, respaldos, etc. |
+| `scripts/prepare-dist.mjs` | Copia los assets de `public/` a `dist/` (esto resuelve el error de la carpeta faltante) |
+| `bootstrap/app.php` | `trustProxies(at: '*')` (HTTPS detrás del proxy de Vercel) |
+| `config/app.php` | `cron_secret` (env `CRON_SECRET`) |
+| `routes/web.php` | `/cron/mark-absents` y `/cron/migrate`, protegidas con `Authorization: Bearer {CRON_SECRET}` |
+| `.env.example` | Documenta las variables de producción |
+
+**Base de datos:** Vercel no provee MySQL. Recomendado conectar **Turso (SQLite)** desde el marketplace (el esquema ya está probado en SQLite: los `ALTER ... ENUM`/`FOREIGN_KEY_CHECKS` están guardados con `!== 'sqlite'`). Alternativa: MySQL externo (Aiven, etc.). Postgres requeriría adaptar esas migraciones.
+
+**Pasos que faltan (los hace el usuario/tanda siguiente):**
+1. Conectar la BD en el marketplace de Vercel y cargar las variables de entorno (ver `.env.example`): `APP_KEY`, `APP_URL`, `CRON_SECRET`, `DB_*`, `MAIL_*`.
+2. Correr migraciones: `GET https://<app>/cron/migrate` con `Authorization: Bearer <CRON_SECRET>` (o `php artisan migrate --force` apuntando a la BD remota).
+3. Importar los datos actuales del MySQL local.
+4. Deploy y smoke test (login, estación, QR, reportes, cron).
+5. **Limitación conocida:** `FILESYSTEM_DISK=local` es efímero en Vercel → los archivos de justificación no persisten. Pendiente decidir S3-compatible (Cloudflare R2) para fase posterior.
+
+**Cron:** `app:mark-absents` está programado en `vercel.json` a `0 23 * * *` (UTC), el mismo instante que el `dailyAt('23:00')` original, ya que `APP_TIMEZONE` no está definido (Laravel usa UTC). Si se define `APP_TIMEZONE=America/Caracas`, cambiar el cron a `0 3 * * *`. Vercel Hobby admite crons 1 vez/día.
 
 ---
 
