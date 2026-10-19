@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Horario - {{ $salon->codigo }}</title>
-    <style>
+    <style nonce="{{ $cspNonce ?? '' }}">
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; }
         .header { text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #212529; }

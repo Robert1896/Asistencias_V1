@@ -60,7 +60,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('justificaciones') }}"><i class="bi bi-clipboard-check me-1"></i>Justificaciones</a></li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear me-1"></i>Admin</a>
-                            <ul class="dropdown-menu dropdown-menu-end">
+                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-scrollable">
                                 <li><small class="dropdown-header text-uppercase">Gestión</small></li>
                                 @can('usuarios_ver')
                                     <li><a class="dropdown-item" href="{{ route('admin.usuarios') }}"><i class="bi bi-people me-2"></i>Usuarios</a></li>

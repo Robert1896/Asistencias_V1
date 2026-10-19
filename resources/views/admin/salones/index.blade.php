@@ -322,7 +322,7 @@
 @endsection
 
 @push('styles')
-<style>
+<style nonce="{{ $cspNonce ?? '' }}">
     @media print {
         body * { visibility: hidden; }
         #qrSalonModal .modal-body, #qrSalonModal .modal-body * { visibility: visible; }

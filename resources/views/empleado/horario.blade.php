@@ -9,7 +9,7 @@
 @section('tone-level', '2')
 
 @push('styles')
-<style>
+<style nonce="{{ $cspNonce ?? '' }}">
     .horario-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .horario-table th { white-space: nowrap; }
     .horario-table td.horario-cell { background: #e3f2fd; vertical-align: middle; }

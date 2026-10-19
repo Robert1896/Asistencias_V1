@@ -5,7 +5,7 @@
 
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css" integrity="sha384-dCW5imOdApH6OwpFau8cZNKjqVbJYnCA5q+8YsMYP3XwXKsV6Jfz1u6MZLnXaBsS" crossorigin="anonymous" rel="stylesheet">
-<style>
+<style nonce="{{ $cspNonce ?? '' }}">
     #reader { width: 100%; max-width: 400px; margin: 0 auto; border: 3px dashed #dee2e6; border-radius: 12px; overflow: hidden; background: #000; }
     #reader video { width: 100% !important; height: auto !important; }
     .estado-indicador { transition: all 0.3s ease; min-height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }

@@ -346,3 +346,21 @@ body .offcanvas-backdrop.show { background: rgba(0,0,0,0.4) !important; }
     background: rgba(239,83,80,0.12) !important; color: #ef5350 !important;
 }
 .offcanvas-logout-btn i { color: #ef5350 !important; }
+
+/* ═══ DROPDOWN ADMIN CON SCROLL VERTICAL ═══ */
+.dropdown-menu-scrollable {
+    max-height: 80vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: .35rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .35) transparent;
+}
+.dropdown-menu-scrollable .dropdown-item,
+.dropdown-menu-scrollable .dropdown-header { padding-right: 1.25rem; }
+.dropdown-menu-scrollable::-webkit-scrollbar { width: 8px; }
+.dropdown-menu-scrollable::-webkit-scrollbar-track { background: transparent; }
+.dropdown-menu-scrollable::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .3); border-radius: 8px; }
+.dropdown-menu-scrollable::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, .45); }
+[data-theme="dark"] .dropdown-menu-scrollable { scrollbar-color: rgba(255, 255, 255, .3) transparent; }
+[data-theme="dark"] .dropdown-menu-scrollable::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .3); }

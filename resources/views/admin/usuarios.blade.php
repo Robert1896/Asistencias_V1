@@ -192,11 +192,15 @@
                         </td>
                         <td><code style="font-size:0.65rem;">{{ $u->codigo_qr_estatico ?? '—' }}</code></td>
                         <td>
+                            @if ($u->codigo_qr_estatico)
                             <button type="button" class="btn btn-outline-success btn-sm"
                                     data-ver-qr="{{ $u->id }}"
                                     data-ver-qr-nombre="{{ $u->nombre_completo }}">
                                 <i class="bi bi-qr-code"></i>
                             </button>
+                            @else
+                            <span class="badge bg-secondary" title="Este usuario no tiene QR estático (usa QR dinámico)">Sin QR</span>
+                            @endif
                             <a href="#" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
                                data-bs-target="#edit-{{ $u->id }}" aria-label="Editar"><i class="bi bi-pencil"></i></a>
                             @if ($u->id !== auth()->id())

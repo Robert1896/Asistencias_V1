@@ -17,7 +17,7 @@
 
 **Auditoría OWASP/CWE + remediación por fases: COMPLETADA (fases 0, A, B, C, D, E, F).**
 
-Suite actual: **OK (128 tests, 606 assertions)**. `composer audit`: **0 avisos**.
+Suite actual: **OK (134 tests, 615 assertions)**. `composer audit`: **0 avisos**.
 
 Commits:
 
@@ -28,8 +28,15 @@ fd0d375  Fase A  — críticos: credenciales, rutas roles, allow-list rol_id
 1c4e553  Fase C  — throttles login, forgot genérico, current_password, invalidar sesiones, SMTP cifrado
 fa5c109  Fase D  — composer update (29→0 avisos), SRI, CORS, cache QR privada, demos eliminados
 214bb1e  Fase E  — justificaciones en disco privado, CSV injection, throttles, sesión absoluta, logs 403
-<pendiente> Fase F — auditoría final + esta documentación
+30bfd19  Fase F  — auditoría final (AUDITORIA_OWASP.md) + esta documentación
+9400e11  Estación Central — verificación red/GPS, middleware, panel admin, rechazo primer registro
+b403072  QR admin + nonce CSP + dropdown scroll + test QrShowTest
 ```
+
+### Trabajo posterior a la auditoría
+
+- **Estación Central (`9400e11`):** middleware `VerificarEstacionCentral` en todas las rutas de estación con modos `ninguno/red/gps/ambos`, IP/rango (`IpUtils`) y distancia Haversine contra radio configurable; headers `X-Geo-Lat/Lng` desde la vista; panel admin Configuración > Estación Central (`estacion_configurar`, id 22, solo rol 1); `AttendanceService` rechaza el primer registro del día de un docente si no existe asistencia previa.
+- **Tanda QR/CSP (este commit):** `QrController::show` permite al admin con `usuarios_ver` ver el QR de otro usuario y devuelve **404** (antes 500) cuando el usuario no tiene QR estático; badge "Sin QR" en `admin/usuarios`; `nonce` CSP en los `<style>` inline de todas las vistas (faltaban 7 + 2 de salones); dropdown del menú Admin con scroll; test `tests/Feature/QrShowTest.php` (5 casos).
 
 ---
 
@@ -91,7 +98,7 @@ Ver `AUDITORIA_OWASP.md` para la matriz completa. En corto:
 ## Comandos de verificación
 
 ```powershell
-# Suite completa (actual: 128 tests, 606 assertions, OK)
+# Suite completa (actual: 134 tests, 615 assertions, OK)
 php artisan view:clear; php artisan route:clear; php artisan config:clear
 & "vendor\bin\phpunit"
 

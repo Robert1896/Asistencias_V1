@@ -22,7 +22,12 @@ class QrController extends Controller
 
     public function show(User $user): Response
     {
-        abort_unless($user->id === auth()->id(), 403, 'No autorizado para ver el QR de otro usuario.');
+        $esPropio = auth()->id() === $user->id;
+        $puedeVerGestion = (bool) auth()->user()?->can('usuarios_ver');
+
+        abort_unless($esPropio || $puedeVerGestion, 403, 'No autorizado para ver el QR de otro usuario.');
+
+        abort_if(blank($user->codigo_qr_estatico), 404, 'Este usuario no tiene QR estático (usa QR dinámico).');
 
         $svg = $this->renderSvg($user->codigo_qr_estatico);
 

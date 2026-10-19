@@ -4,7 +4,7 @@
 @section('tone-level', '2')
 
 @push('styles')
-<style>
+<style nonce="{{ $cspNonce ?? '' }}">
     .bloque-checkbox {
         transition: all 0.15s ease;
     }

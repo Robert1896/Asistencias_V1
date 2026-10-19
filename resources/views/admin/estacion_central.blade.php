@@ -8,7 +8,7 @@
 @section('tone-level', '1')
 
 @push('styles')
-<style>
+<style nonce="{{ $cspNonce ?? '' }}">
     .modo-radio {
         cursor: pointer;
         transition: all .15s ease-in-out;
@@ -220,7 +220,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function () {
         const radios = document.querySelectorAll('input[name="modo"]');
         const modoRadios = document.querySelectorAll('.modo-radio');
