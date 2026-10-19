@@ -22,6 +22,41 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
+            $cronSecret = function (\Illuminate\Http\Request $request): void {
+                $secret = (string) config('app.cron_secret');
+                abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
+            };
+
+            Route::get('cron/mark-absents', function (\Illuminate\Http\Request $request) use ($cronSecret) {
+                $cronSecret($request);
+
+                \Illuminate\Support\Facades\Artisan::call('app:mark-absents');
+
+                return response()->json([
+                    'ok'     => true,
+                    'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+                ]);
+            })->name('cron.mark-absents');
+
+            Route::get('cron/migrate', function (\Illuminate\Http\Request $request) use ($cronSecret) {
+                $cronSecret($request);
+
+                try {
+                    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+
+                    return response()->json([
+                        'ok'     => true,
+                        'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+                    ]);
+                } catch (\Throwable $e) {
+                    return response()->json([
+                        'ok'      => false,
+                        'class'   => get_class($e),
+                        'message' => $e->getMessage(),
+                    ], 500);
+                }
+            })->name('cron.migrate');
+
             Route::get('diag-db', function (\Illuminate\Http\Request $request) {
                 $caEnv = env('MYSQL_ATTR_SSL_CA');
                 $base = [

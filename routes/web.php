@@ -18,8 +18,6 @@ use App\Http\Controllers\EstacionController;
 use App\Http\Controllers\JustificacionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QrController;
-use App\Http\Middleware\DocenteSessionTimeout;
-use App\Http\Middleware\SesionAbsoluta;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,52 +38,11 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware(['auth', '
 
 /*
 |--------------------------------------------------------------------------
-| Tareas programadas (Vercel Cron / invocación manual)
+| Tareas programadas (Vercel Cron)
 |--------------------------------------------------------------------------
-| Vercel no ejecuta el scheduler de Laravel; estas rutas exponen los
-| comandos y quedan protegidas por el header "Authorization: Bearer
-| {CRON_SECRET}". Configurar CRON_SECRET en las variables de entorno.
+| Se registran en bootstrap/app.php, fuera del grupo "web", para no
+| depender de la sesión en base de datos (tabla "sessions").
 */
-Route::withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \Illuminate\Session\Middleware\ShareErrorsFromSession::class,
-    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-    DocenteSessionTimeout::class,
-    SesionAbsoluta::class,
-    \App\Http\Middleware\VerificarEstatusActivo::class,
-])->group(function () {
-    Route::get('cron/mark-absents', function (\Illuminate\Http\Request $request) {
-        $secret = (string) config('app.cron_secret');
-        abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
-
-        \Illuminate\Support\Facades\Artisan::call('app:mark-absents');
-
-        return response()->json([
-            'ok'     => true,
-            'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
-        ]);
-    })->name('cron.mark-absents');
-
-    Route::get('cron/migrate', function (\Illuminate\Http\Request $request) {
-        $secret = (string) config('app.cron_secret');
-        abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
-
-        try {
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-
-            return response()->json([
-                'ok'     => true,
-                'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'ok'      => false,
-                'class'   => get_class($e),
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    })->name('cron.migrate');
-});
 
 /*
 |--------------------------------------------------------------------------
