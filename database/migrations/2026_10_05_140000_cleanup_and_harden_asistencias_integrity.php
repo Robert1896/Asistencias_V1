@@ -96,6 +96,16 @@ return new class extends Migration
         if ($redundante) {
             DB::statement('ALTER TABLE asistencias DROP INDEX idx_asistencias_fecha');
         }
+
+        $unicoFecha = DB::selectOne(
+            "SELECT INDEX_NAME FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'asistencias'
+             AND INDEX_NAME = 'asistencias_usuario_id_fecha_unique'"
+        );
+
+        if ($unicoFecha) {
+            DB::statement('ALTER TABLE asistencias DROP INDEX asistencias_usuario_id_fecha_unique');
+        }
     }
 
     /**
