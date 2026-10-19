@@ -70,12 +70,20 @@ Route::withoutMiddleware([
         $secret = (string) config('app.cron_secret');
         abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
 
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
-        return response()->json([
-            'ok'     => true,
-            'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
-        ]);
+            return response()->json([
+                'ok'     => true,
+                'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'ok'      => false,
+                'class'   => get_class($e),
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     })->name('cron.migrate');
 });
 
