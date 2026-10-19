@@ -11,7 +11,6 @@ use App\Http\Middleware\W3cCompliance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
@@ -41,54 +40,13 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::get('cron/migrate', function (\Illuminate\Http\Request $request) use ($cronSecret) {
                 $cronSecret($request);
 
-                try {
-                    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+                \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
-                    return response()->json([
-                        'ok'     => true,
-                        'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
-                    ]);
-                } catch (\Throwable $e) {
-                    return response()->json([
-                        'ok'      => false,
-                        'class'   => get_class($e),
-                        'message' => $e->getMessage(),
-                    ], 500);
-                }
+                return response()->json([
+                    'ok'     => true,
+                    'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+                ]);
             })->name('cron.migrate');
-
-            Route::get('diag-db', function (\Illuminate\Http\Request $request) {
-                $caEnv = env('MYSQL_ATTR_SSL_CA');
-                $base = [
-                    'default'         => config('database.default'),
-                    'host'            => config('database.connections.mysql.host'),
-                    'port'            => config('database.connections.mysql.port'),
-                    'database'        => config('database.connections.mysql.database'),
-                    'username'        => config('database.connections.mysql.username'),
-                    'ssl_ca_env'      => $caEnv,
-                    'ssl_ca_exists'   => $caEnv ? file_exists($caEnv) : false,
-                    'base_path'       => base_path(),
-                    'ca_in_base'      => file_exists(base_path('ca.pem')),
-                    'auth_header_len' => strlen((string) $request->header('Authorization')),
-                    'bearer_len'      => strlen((string) $request->bearerToken()),
-                    'cron_secret_len' => strlen((string) config('app.cron_secret')),
-                    'env_cron_len'    => strlen((string) env('CRON_SECRET')),
-                    'token_match'     => hash_equals((string) config('app.cron_secret'), (string) $request->bearerToken()),
-                ];
-
-                try {
-                    DB::connection()->getPdo();
-                    $info = DB::select('select database() as db, current_user() as usr, version() as ver');
-
-                    return response()->json(array_merge($base, ['ok' => true, 'info' => $info]));
-                } catch (\Throwable $e) {
-                    return response()->json(array_merge($base, [
-                        'ok'      => false,
-                        'class'   => get_class($e),
-                        'message' => $e->getMessage(),
-                    ]), 500);
-                }
-            });
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
