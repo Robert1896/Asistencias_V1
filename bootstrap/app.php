@@ -23,20 +23,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             Route::get('diag-db', function (\Illuminate\Http\Request $request) {
-                $secret = (string) config('app.cron_secret');
-                abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
-
                 $caEnv = env('MYSQL_ATTR_SSL_CA');
                 $base = [
-                    'default'       => config('database.default'),
-                    'host'          => config('database.connections.mysql.host'),
-                    'port'          => config('database.connections.mysql.port'),
-                    'database'      => config('database.connections.mysql.database'),
-                    'username'      => config('database.connections.mysql.username'),
-                    'ssl_ca_env'    => $caEnv,
-                    'ssl_ca_exists' => $caEnv ? file_exists($caEnv) : false,
-                    'base_path'     => base_path(),
-                    'ca_in_base'    => file_exists(base_path('ca.pem')),
+                    'default'         => config('database.default'),
+                    'host'            => config('database.connections.mysql.host'),
+                    'port'            => config('database.connections.mysql.port'),
+                    'database'        => config('database.connections.mysql.database'),
+                    'username'        => config('database.connections.mysql.username'),
+                    'ssl_ca_env'      => $caEnv,
+                    'ssl_ca_exists'   => $caEnv ? file_exists($caEnv) : false,
+                    'base_path'       => base_path(),
+                    'ca_in_base'      => file_exists(base_path('ca.pem')),
+                    'auth_header_len' => strlen((string) $request->header('Authorization')),
+                    'bearer_len'      => strlen((string) $request->bearerToken()),
+                    'cron_secret_len' => strlen((string) config('app.cron_secret')),
+                    'env_cron_len'    => strlen((string) env('CRON_SECRET')),
                 ];
 
                 try {
