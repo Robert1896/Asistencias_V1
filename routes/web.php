@@ -18,6 +18,8 @@ use App\Http\Controllers\EstacionController;
 use App\Http\Controllers\JustificacionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QrController;
+use App\Http\Middleware\DocenteSessionTimeout;
+use App\Http\Middleware\SesionAbsoluta;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,29 +46,38 @@ Route::post('logout', [LoginController::class, 'logout'])->middleware(['auth', '
 | comandos y quedan protegidas por el header "Authorization: Bearer
 | {CRON_SECRET}". Configurar CRON_SECRET en las variables de entorno.
 */
-Route::get('cron/mark-absents', function (\Illuminate\Http\Request $request) {
-    $secret = (string) config('app.cron_secret');
-    abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
+Route::withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\Session\Middleware\ShareErrorsFromSession::class,
+    \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+    DocenteSessionTimeout::class,
+    SesionAbsoluta::class,
+    \App\Http\Middleware\VerificarEstatusActivo::class,
+])->group(function () {
+    Route::get('cron/mark-absents', function (\Illuminate\Http\Request $request) {
+        $secret = (string) config('app.cron_secret');
+        abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
 
-    \Illuminate\Support\Facades\Artisan::call('app:mark-absents');
+        \Illuminate\Support\Facades\Artisan::call('app:mark-absents');
 
-    return response()->json([
-        'ok'     => true,
-        'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
-    ]);
-})->name('cron.mark-absents');
+        return response()->json([
+            'ok'     => true,
+            'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+        ]);
+    })->name('cron.mark-absents');
 
-Route::get('cron/migrate', function (\Illuminate\Http\Request $request) {
-    $secret = (string) config('app.cron_secret');
-    abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
+    Route::get('cron/migrate', function (\Illuminate\Http\Request $request) {
+        $secret = (string) config('app.cron_secret');
+        abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
 
-    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
 
-    return response()->json([
-        'ok'     => true,
-        'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
-    ]);
-})->name('cron.migrate');
+        return response()->json([
+            'ok'     => true,
+            'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+        ]);
+    })->name('cron.migrate');
+});
 
 /*
 |--------------------------------------------------------------------------
