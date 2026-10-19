@@ -31,7 +31,7 @@ fa5c109  Fase D  — composer update (29→0 avisos), SRI, CORS, cache QR privad
 30bfd19  Fase F  — auditoría final (AUDITORIA_OWASP.md) + esta documentación
 9400e11  Estación Central — verificación red/GPS, middleware, panel admin, rechazo primer registro
 b403072  QR admin + nonce CSP + dropdown scroll + test QrShowTest
-795043b  Vercel — api/index.php, vercel.json, prepare-dist, cron, trustProxies
+7697d97  Vercel — api/index.php, vercel.json, prepare-dist, cron, trustProxies
 ```
 
 ### Trabajo posterior a la auditoría
