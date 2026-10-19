@@ -73,6 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'bearer_len'      => strlen((string) $request->bearerToken()),
                     'cron_secret_len' => strlen((string) config('app.cron_secret')),
                     'env_cron_len'    => strlen((string) env('CRON_SECRET')),
+                    'token_match'     => hash_equals((string) config('app.cron_secret'), (string) $request->bearerToken()),
                 ];
 
                 try {
