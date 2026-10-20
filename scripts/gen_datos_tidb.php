@@ -15,21 +15,39 @@ if ($bom === "\xFF\xFE") {
 }
 $sql = mb_convert_encoding($raw, 'UTF-8', 'UTF-16LE');
 
+// Orden de INSERCION: primero las tablas padre (sin dependencias), luego las
+// hijas. Esto respeta las foreign keys al recargar datos.
 $tablesDeseadas = [
-    'activity_log',
-    'asistencias',
+    // Sin dependencias (padres):
+    'roles',
+    'permisos',
+    'departamentos',
     'coordinaciones',
     'correo_config',
-    'departamentos',
     'horarios',
-    'horarios_administrativos',
-    'permisos',
-    'qr_tokens',
-    'rol_permiso',
-    'roles',
     'salones',
-    'sessions',
+    // Dependen de roles/permisos/horarios/departamentos:
     'users',
+    'rol_permiso',
+    // Dependen de users / salones / horarios:
+    'horarios_administrativos',
+    'asistencias',
+    'qr_tokens',
+    'activity_log',
+    'sessions',
+];
+
+// Tablas hijas que NO se recargan desde el respaldo, pero que referencian a las
+// tablas padre (users, horarios, salones, etc.). Deben vaciarse ANTES de
+// borrar los padres para que el DELETE no falle por foreign key.
+$tablasHijasExtra = [
+    'auditoria_asistencias',
+    'docente_horario',
+    'carga_academica_docente',
+    'dias_feriados',
+    'estacion_central',
+    'personal_access_tokens',
+    'password_reset_tokens',
 ];
 
 /**
@@ -201,17 +219,45 @@ foreach ($tablesDeseadas as $tabla) {
 
 $salida = "SET NAMES utf8mb4;\n";
 $salida .= "SET FOREIGN_KEY_CHECKS=0;\n";
+
+// 1. Vaciar primero las tablas hijas que no recargamos (evita fallos de FK).
+foreach ($tablasHijasExtra as $tabla) {
+    $salida .= "DELETE FROM `{$tabla}`;\n";
+}
+
+// 2. Vaciar las tablas del respaldo en orden inverso (hijas -> padres).
+//    Se usa DELETE (no TRUNCATE) porque TiDB Serverless puede ignorar
+//    FOREIGN_KEY_CHECKS=0 y rechazar TRUNCATE sobre tablas referenciadas.
+foreach (array_reverse($tablesDeseadas) as $tabla) {
+    $salida .= "DELETE FROM `{$tabla}`;\n";
+}
+
+// 3. Recargar en orden padres -> hijas.
 foreach ($tablesDeseadas as $tabla) {
     if (isset($bloques[$tabla])) {
-        $salida .= "TRUNCATE TABLE `{$tabla}`;\n";
         $salida .= $bloques[$tabla] . "\n";
     }
 }
+
 $salida .= "SET FOREIGN_KEY_CHECKS=1;\n";
 
 file_put_contents($outPath, $salida);
 
+// Version en PHP (SI se versiona en git y se despliega a Vercel) para poder
+// importar los datos desde el propio servidor via /cron/import-datos, sin
+// depender del portapapeles ni del SQL Editor (que rompe la codificacion).
+$phpOutPath = __DIR__ . '/../database/data/datos_asistencias.php';
+$phpDir = dirname($phpOutPath);
+if (!is_dir($phpDir)) {
+    mkdir($phpDir, 0755, true);
+}
+$phpContenido = "<?php\n\n// GENERADO por scripts/gen_datos_tidb.php — no editar a mano.\n"
+    . "// Contiene el SQL de recarga de datos (acentos corregidos).\n\nreturn "
+    . var_export($salida, true) . ";\n";
+file_put_contents($phpOutPath, $phpContenido);
+
 echo "Generado: {$outPath}\n";
+echo "Generado: {$phpOutPath}\n";
 echo 'Tablas incluidas: ' . count($bloques) . "\n";
 foreach ($bloques as $t => $b) {
     echo "  - {$t} (" . strlen($b) . " bytes)\n";

@@ -47,6 +47,40 @@ return Application::configure(basePath: dirname(__DIR__))
                     'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
                 ]);
             })->name('cron.migrate');
+
+            Route::get('cron/import-datos', function (\Illuminate\Http\Request $request) use ($cronSecret) {
+                $cronSecret($request);
+
+                $path = database_path('data/datos_asistencias.php');
+                abort_unless(is_file($path), 404, 'No se encontro el archivo de datos.');
+
+                $sql = require $path;
+                abort_unless(is_string($sql) && trim($sql) !== '', 500, 'Archivo de datos invalido.');
+
+                $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
+                $pdo->exec('SET NAMES utf8mb4');
+
+                $ejecutadas = 0;
+                foreach (array_filter(array_map('trim', preg_split('/;\R/', $sql))) as $sentencia) {
+                    $pdo->exec($sentencia);
+                    $ejecutadas++;
+                }
+
+                $conteos = [];
+                foreach (['users', 'roles', 'permisos', 'horarios', 'salones', 'asistencias'] as $tabla) {
+                    $conteos[$tabla] = (int) \Illuminate\Support\Facades\DB::table($tabla)->count();
+                }
+
+                return response()->json([
+                    'ok'               => true,
+                    'sentencias'       => $ejecutadas,
+                    'conteos'          => $conteos,
+                    'muestra'          => \Illuminate\Support\Facades\DB::table('users')
+                        ->where('nombre', 'like', '%Jos%')
+                        ->limit(3)
+                        ->get(['nombre', 'apellido', 'nombre_completo']),
+                ]);
+            })->name('cron.import-datos');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
