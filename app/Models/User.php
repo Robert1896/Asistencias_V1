@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -26,17 +27,23 @@ class User extends Authenticatable
         'rol_id',
         'estatus',
         'codigo_qr_estatico',
+        'two_factor_enabled',
+        'two_factor_code',
+        'two_factor_expires_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_code',
     ];
 
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'password'              => 'hashed',
+            'two_factor_enabled'    => 'boolean',
+            'two_factor_expires_at' => 'datetime',
         ];
     }
 
@@ -89,6 +96,51 @@ class User extends Authenticatable
     public function tienePermiso(string $codigoPermiso): bool
     {
         return $this->rol->permisos()->where('codigo', $codigoPermiso)->exists();
+    }
+
+    /**
+     * Requisito #15: genera un código de 6 dígitos, lo guarda hasheado con
+     * vencimiento y lo envía por correo. Devuelve los minutos de validez.
+     */
+    public function generarCodigoDosFactores(int $minutosValidez = 10): int
+    {
+        $codigo = (string) random_int(100000, 999999);
+
+        $this->forceFill([
+            'two_factor_code'       => Hash::make($codigo),
+            'two_factor_expires_at' => now()->addMinutes($minutosValidez),
+        ])->saveQuietly();
+
+        $this->notify(new \App\Notifications\TwoFactorCodeNotification($codigo, $minutosValidez));
+
+        return $minutosValidez;
+    }
+
+    /**
+     * Valida el código ingresado contra el hash almacenado y su vencimiento.
+     */
+    public function codigoDosFactoresValido(?string $codigo): bool
+    {
+        if (!$codigo || !$this->two_factor_code || !$this->two_factor_expires_at) {
+            return false;
+        }
+
+        if ($this->two_factor_expires_at->isPast()) {
+            return false;
+        }
+
+        return Hash::check($codigo, $this->two_factor_code);
+    }
+
+    /**
+     * Limpia el código tras un uso correcto (evita reutilización).
+     */
+    public function limpiarCodigoDosFactores(): void
+    {
+        $this->forceFill([
+            'two_factor_code'       => null,
+            'two_factor_expires_at' => null,
+        ])->saveQuietly();
     }
 
     /**

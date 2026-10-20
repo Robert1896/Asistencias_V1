@@ -204,11 +204,11 @@
                             <a href="#" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
                                data-bs-target="#edit-{{ $u->id }}" aria-label="Editar"><i class="bi bi-pencil"></i></a>
                             @if ($u->id !== auth()->id())
-                            <form method="POST" action="{{ route('admin.usuarios.destroy', $u) }}" class="d-inline"
-                                  data-confirm="¿Eliminar a {{ $u->nombre_completo }}?">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+                                    data-delete-action="{{ route('admin.usuarios.destroy', $u) }}"
+                                    data-delete-name="{{ $u->nombre_completo }}"
+                                    aria-label="Eliminar"><i class="bi bi-trash"></i></button>
                             @endif
                         </td>
                     </tr>
@@ -302,6 +302,35 @@
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
+    </div>
+</div>
+
+{{-- Modal de confirmación de eliminación (step-up auth #19) --}}
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" id="deleteUserForm" action="">
+            @csrf @method('DELETE')
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h1 class="modal-title h5" id="deleteUserModalLabel"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Confirmar eliminación</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Vas a eliminar al usuario <strong id="deleteUserName"></strong>. Esta acción no se puede deshacer.</p>
+                    <label class="form-label" for="deletePassword">Confirma tu contraseña de administrador</label>
+                    <input type="password" name="password_confirmacion" id="deletePassword"
+                           class="form-control" required autocomplete="current-password">
+                    @error('password_confirmacion')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text">Se requiere tu contraseña para autorizar una acción destructiva.</div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash me-1"></i>Eliminar usuario</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 @endsection

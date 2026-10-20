@@ -28,7 +28,7 @@ class StoreUserRequest extends FormRequest
             'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
             'cedula'   => 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
             'email'    => 'required|email|max:120|unique:users,email',
-            'password' => 'required|string|min:8|max:72|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+            'password' => 'required|' . \App\Support\PasswordPolicy::ruleString(),
             'rol_id'   => ['required', 'integer', 'exists:roles,id', Rule::in($this->rolesAsignables())],
         ];
     }
@@ -55,8 +55,7 @@ class StoreUserRequest extends FormRequest
             'cedula.unique'         => 'Esta cédula ya está registrada.',
             'nombre.regex'          => 'El nombre solo puede contener letras y espacios.',
             'apellido.regex'        => 'El apellido solo puede contener letras y espacios.',
-            'password.min'          => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.max'          => 'La contraseña no puede exceder 72 caracteres.',
+            'password.min'          => 'La contraseña debe tener al menos 16 caracteres.',
             'password.regex'        => 'La contraseña debe incluir al menos una mayúscula, una minúscula y un número.',
             'email.unique'          => 'Este correo ya está registrado.',
             'email.email'           => 'El correo no es válido.',

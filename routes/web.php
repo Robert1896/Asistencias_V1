@@ -32,6 +32,12 @@ Route::middleware(['guest', 'no-cache'])->group(function () {
     Route::post('forgot-password', [LoginController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
     Route::get('reset-password/{token}', [LoginController::class, 'showResetForm'])->name('password.reset');
     Route::post('reset-password', [LoginController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
+
+    // Verificación en dos pasos (#15)
+    Route::get('login/verificar', [LoginController::class, 'showTwoFactorForm'])->name('login.twofactor');
+    Route::post('login/verificar', [LoginController::class, 'verifyTwoFactor'])->middleware('throttle:10,1');
+    Route::post('login/verificar/reenviar', [LoginController::class, 'resendTwoFactor'])->middleware('throttle:5,1')->name('login.twofactor.resend');
+    Route::post('login/verificar/cancelar', [LoginController::class, 'cancelTwoFactor'])->name('login.twofactor.cancel');
 });
 
 Route::post('logout', [LoginController::class, 'logout'])->middleware(['auth', 'no-cache'])->name('logout');

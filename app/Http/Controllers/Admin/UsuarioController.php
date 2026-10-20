@@ -120,7 +120,7 @@ class UsuarioController extends Controller
         return redirect()->route('admin.usuarios')->with('success', $mensaje);
     }
 
-    public function destroy(User $usuario): RedirectResponse
+    public function destroy(Request $request, User $usuario): RedirectResponse
     {
         if ($usuario->id === auth()->id()) {
             return back()->with('error', 'No puedes eliminarte a ti mismo.');
@@ -128,6 +128,23 @@ class UsuarioController extends Controller
 
         // Una cuenta Superadmin solo puede ser modificada por otra Superadmin (CWE-269)
         abort_if((int) $usuario->rol_id === 1 && (int) auth()->user()->rol_id !== 1, 403);
+
+        // Requisito #19: step-up authentication. El operador debe reingresar su
+        // contraseña para confirmar una acción destructiva.
+        $request->validate([
+            'password_confirmacion' => 'required|string',
+        ], [
+            'password_confirmacion.required' => 'Debes ingresar tu contraseña para confirmar la eliminación.',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->input('password_confirmacion'), auth()->user()->password)) {
+            ActivityLog::log('usuario_eliminar_denegado', "Contraseña incorrecta al intentar eliminar a {$usuario->email}", 'usuarios', [
+                'email'   => $usuario->email,
+                'user_id' => auth()->id(),
+            ]);
+
+            return back()->withErrors(['password_confirmacion' => 'La contraseña no es correcta. No se eliminó el usuario.']);
+        }
 
         $email = $usuario->email;
         $usuario->delete();

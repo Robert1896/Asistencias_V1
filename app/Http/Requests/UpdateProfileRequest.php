@@ -28,7 +28,7 @@ class UpdateProfileRequest extends FormRequest
             'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
             'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$userId}",
             'email'    => "required|email|max:120|unique:users,email,{$userId}",
-            'password' => 'nullable|string|min:8|max:72|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+            'password' => 'nullable|confirmed|' . \App\Support\PasswordPolicy::ruleString(),
         ];
     }
 
@@ -42,8 +42,7 @@ class UpdateProfileRequest extends FormRequest
             'cedula.unique'         => 'Esta cédula ya está registrada.',
             'nombre.regex'          => 'El nombre solo puede contener letras y espacios.',
             'apellido.regex'        => 'El apellido solo puede contener letras y espacios.',
-            'password.min'          => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.max'          => 'La contraseña no puede exceder 72 caracteres.',
+            'password.min'          => 'La contraseña debe tener al menos 16 caracteres.',
             'password.regex'        => 'La contraseña debe incluir al menos una mayúscula, una minúscula y un número.',
             'password.confirmed'    => 'Las contraseñas no coinciden.',
             'email.unique'          => 'Este correo ya está registrado.',
