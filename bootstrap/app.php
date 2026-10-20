@@ -66,18 +66,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->renderable(function (\Throwable $e, \Illuminate\Http\Request $request) {
-            $secret = (string) config('app.cron_secret');
-            if ($secret !== '' && hash_equals($secret, (string) $request->bearerToken())) {
-                return response()->json([
-                    'class'   => get_class($e),
-                    'message' => $e->getMessage(),
-                    'file'    => $e->getFile() . ':' . $e->getLine(),
-                    'trace'   => array_slice(explode("\n", $e->getTraceAsString()), 0, 15),
-                ], 500);
-            }
-        });
-
         $exceptions->reportable(function (\Throwable $e) {
             Log::error($e->getMessage(), [
                 'exception' => $e,
