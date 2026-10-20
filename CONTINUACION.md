@@ -118,6 +118,30 @@ Archivos añadidos:
 
 ---
 
+## Corrección de acentos (mojibake CP437) — datos importados
+
+**Síntoma:** en `admin/usuarios` (y otras listas) los acentos salían como caracteres de caja: `├│`, `├í`, `├®`, `├║` (p.ej. "Rodr├¡guez", "Coordinaci├│n", "Acad├®mica").
+
+**Causa raíz:** el dump fuente `qr_asistencia.sql` (UTF-16 LE) **ya venía corrupto**. Al generarse, los bytes UTF-8 de cada acento se interpretaron como CP437: `ó` (`C3 B3`) quedó como `├`+`│` (U+251C U+2502). No era problema de la vista (`usuarios.blade.php` está en UTF-8 correcto) ni de TiDB.
+
+**Solución aplicada:** `scripts/gen_datos_tidb.php` ahora revierte el mojibake en cada INSERT:
+- `tablaCp437()` — mapa de los 128 caracteres CP437 (bytes 0x80-0xFF) a Unicode.
+- `revertirCp437()` — convierte cada carácter a su byte CP437 y reinterpreta la secuencia como UTF-8, validando por secuencia (los bytes que no forman UTF-8 válido se devuelven como carácter CP437 original).
+- `reemplazosDoblePaso()` — corrige los pocos remanentes de doble codificación: `ÔÇô`→`–`, `ÔÇª`→`…`, `ÔåÆ`→`→`, `├®`→`é`.
+- Se aplica al INSERT completo (seguro: **todo** carácter no-ASCII del dump está dentro de literales de texto — verificado).
+
+**Reimportar en TiDB:** el generador produce `datos_tidb.sql` con `TRUNCATE TABLE` + INSERT (incluye nombres de columna explícitos). Ejecutarlo en TiDB Cloud recarga las 14 tablas ya corregidas. El usuario ejecuta este SQL (no contiene secretos; `*.sql` está en `.gitignore`).
+
+**Para que no vuelva a pasar:** exportar desde MySQL/MariaDB con `--default-character-set=utf8mb4` y **redirigiendo a archivo binario**, no por consola/pipeline que reinterprete la codificación:
+
+```powershell
+& 'C:\xampp\mysql\bin\mysqldump.exe' -uroot --default-character-set=utf8mb4 --single-transaction --routines --triggers qr_asistencia | Out-File -Encoding utf8 -FilePath dump.sql
+```
+
+(Evitar `>` simple y evitar leer el dump en editores que asuman CP437.)
+
+---
+
 ## Nota de entorno
 
 - `EstadoAsistencia::MINUTOS_TOLERANCIA` lanzaba `Undefined constant` intermitente desde PHPUnit; resuelto eliminando el test que leía la constante directamente. No reintroducirlo.
