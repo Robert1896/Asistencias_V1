@@ -130,7 +130,18 @@ Archivos añadidos:
 - `reemplazosDoblePaso()` — corrige los pocos remanentes de doble codificación: `ÔÇô`→`–`, `ÔÇª`→`…`, `ÔåÆ`→`→`, `├®`→`é`.
 - Se aplica al INSERT completo (seguro: **todo** carácter no-ASCII del dump está dentro de literales de texto — verificado).
 
-**Reimportar en TiDB:** el generador produce `datos_tidb.sql` con `TRUNCATE TABLE` + INSERT (incluye nombres de columna explícitos). Ejecutarlo en TiDB Cloud recarga las 14 tablas ya corregidas. El usuario ejecuta este SQL (no contiene secretos; `*.sql` está en `.gitignore`).
+**Reimportar en TiDB (método recomendado):** ejecutar el endpoint protegido que importa desde el propio servidor, evitando el portapapeles/SQL Editor (que reinterpretaba la codificación y volvía a corromper los acentos):
+
+```
+GET https://sadiuptag1.vercel.app/cron/import-datos
+    Authorization: Bearer <CRON_SECRET>
+```
+
+El generador produce además `database/data/datos_asistencias.php` (un `return '<sql>';`), que **sí se versiona** y se despliega a Vercel. El endpoint lee ese archivo y ejecuta las sentencias vía PDO con `SET NAMES utf8mb4`.
+
+**Causa del fallo previo con `datos_tidb.sql`:** usaba `TRUNCATE TABLE`, que en TiDB Serverless falla sobre tablas referenciadas por foreign keys **aunque** haya `SET FOREIGN_KEY_CHECKS=0` (TiDB lo ignora). El generador ahora emite **`DELETE FROM`** en orden hijos→padres (y vacía tablas hijas extra: `auditoria_asistencias`, `docente_horario`, `carga_academica_docente`, `dias_feriados`, `estacion_central`, `personal_access_tokens`, `password_reset_tokens`) y **carga en orden padres→hijos**. Probado end-to-end contra el esquema real (exit 0, idempotente).
+
+`datos_tidb.sql` (método manual alternativo) sigue generándose, pero `*.sql` está en `.gitignore`; no contiene secretos.
 
 **Para que no vuelva a pasar:** exportar desde MySQL/MariaDB con `--default-character-set=utf8mb4` y **redirigiendo a archivo binario**, no por consola/pipeline que reinterprete la codificación:
 
