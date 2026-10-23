@@ -19,7 +19,7 @@ class UserFactory extends Factory
             'nombre' => fake()->firstName(),
             'apellido' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
-            'password' => Hash::make('Password1'),
+            'password' => Hash::make('ClaveFactorySegura2026!'),
             'cedula' => fake()->unique()->numerify('#######'),
             'rol_id' => Rol::factory(),
             'estatus' => 'activo',

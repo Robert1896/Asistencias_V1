@@ -10,6 +10,7 @@ use App\Models\Horario;
 use App\Models\Rol;
 use App\Models\Salon;
 use App\Models\User;
+use App\Support\PasswordPolicy;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,7 +26,7 @@ class ImportService
      */
     private static function generarPasswordSegura(int $length = 16): string
     {
-        $length = max($length, 12);
+        $length = max($length, PasswordPolicy::MIN_LENGTH);
 
         $min = 'abcdefghijkmnpqrstuvwxyz';
         $may = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -214,8 +215,8 @@ class ImportService
                 ? trim($row[$passwordIdx])
                 : self::generarPasswordSegura(16);
 
-            if (mb_strlen($finalPassword) < 8 || !preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $finalPassword)) {
-                $errores[] = "Fila " . ($i + 2) . ": contraseña no cumple mínimo 8 caracteres, mayúscula, minúscula y número.";
+            if (mb_strlen($finalPassword) < PasswordPolicy::MIN_LENGTH || !preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $finalPassword)) {
+                $errores[] = "Fila " . ($i + 2) . ": contraseña no cumple mínimo " . PasswordPolicy::MIN_LENGTH . " caracteres, mayúscula, minúscula y número.";
                 continue;
             }
 

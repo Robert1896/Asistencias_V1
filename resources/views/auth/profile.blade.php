@@ -58,9 +58,16 @@
 
                     <div class="mb-3">
                         <label class="form-label">Contraseña Actual <small class="text-muted">(obligatoria para cambiar el correo o la contraseña)</small></label>
-                        <input type="password" name="current_password" autocomplete="current-password"
-                               class="form-control @error('current_password') is-invalid @enderror"
-                               placeholder="Tu contraseña actual">
+                        <div class="pw-field-wrap">
+                            <input type="password" name="current_password" id="current-password-input" autocomplete="current-password"
+                                   class="form-control @error('current_password') is-invalid @enderror"
+                                   placeholder="Tu contraseña actual">
+                            <button class="pw-toggle-btn" type="button"
+                                    data-pw-toggle="current-password-input"
+                                    title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                         @error('current_password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -68,10 +75,17 @@
 
                     <div class="mb-3">
                         <label class="form-label">Nueva Contraseña <small class="text-muted">(dejar vacío para no cambiar)</small></label>
-                        <input type="password" name="password" id="password-input" class="form-control @error('password') is-invalid @enderror"
-                               minlength="8" placeholder="Mín. 8: mayúscula + minúscula + número"
-                               pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                               title="Mínimo 8 caracteres con mayúscula, minúscula y número">
+                        <div class="pw-field-wrap">
+                            <input type="password" name="password" id="password-input" class="form-control @error('password') is-invalid @enderror"
+                                   minlength="16" placeholder="Mín. 16: mayúscula + minúscula + número"
+                                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{16,}"
+                                   title="Mínimo 16 caracteres con mayúscula, minúscula y número">
+                            <button class="pw-toggle-btn" type="button"
+                                    data-pw-toggle="password-input"
+                                    title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                         <div class="mt-1" id="password-strength" style="display:none;">
                             <div class="progress" style="height:5px;">
                                 <div id="strength-bar" class="progress-bar" style="width:0%"></div>
@@ -82,8 +96,15 @@
 
                     <div class="mb-3">
                         <label class="form-label">Confirmar Contraseña</label>
-                        <input type="password" name="password_confirmation" class="form-control"
-                               placeholder="Repite la contraseña">
+                        <div class="pw-field-wrap">
+                            <input type="password" name="password_confirmation" id="password-confirm-input" class="form-control"
+                                   placeholder="Repite la contraseña">
+                            <button class="pw-toggle-btn" type="button"
+                                    data-pw-toggle="password-confirm-input"
+                                    title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     @if ($user->rol_id !== 3)

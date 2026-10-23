@@ -380,6 +380,7 @@
                                 '[A-Za-záéíóúñÁÉÍÓÚÑ\\s]+': 'Solo se permiten letras y espacios.',
                                 '[0-9]+': 'Solo se permiten números.',
                                 '[0-9]{7,8}': 'Debe tener entre 7 y 8 dígitos.',
+                                '(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{16,}': 'Mínimo 16 caracteres con mayúscula, minúscula y número.',
                                 '(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}': 'Mínimo 8 caracteres con mayúscula, minúscula y número.'
                             };
                             showError(titles[field.pattern] || field.title || 'Formato no válido.'); return false;

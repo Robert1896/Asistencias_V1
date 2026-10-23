@@ -109,11 +109,20 @@ class AttendanceService
             ];
         }
 
+        $esSalonEspecial = in_array(strtoupper((string) $salon->codigo), ['ADHOC-001', 'ESPECIAL'], true);
+
         $bloque = $usuario->obtenerBloqueActivoEnSalon($hoy, $horaAhora, $salon->id);
 
         $sinAsignacion = false;
 
         if (!$bloque) {
+            if ((int) $usuario->rol_id === 3 && $esSalonEspecial) {
+                $departamento = Departamento::where('codigo', 'INFO')->first();
+                if ($departamento) {
+                    return $this->procesarDocenteAdHoc($usuario, (int) $departamento->id, $ip, (int) $salon->id);
+                }
+            }
+
             $sesionActiva = $usuario->obtenerSesionActiva($hoy, $horaAhora);
 
             $sinAsignacion = true;

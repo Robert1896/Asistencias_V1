@@ -47,7 +47,7 @@ class RolePermisosTest extends TestCase
             'apellido' => 'Perez',
             'cedula'   => '19876543',
             'email'    => 'ana.perez@example.com',
-            'password' => 'Secreta123',
+            'password' => 'UsuarioSeguro2026!X',
             'rol_id'   => 3,
         ], $sobrescribir);
     }

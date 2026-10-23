@@ -83,10 +83,10 @@
                             <div class="input-group input-group-sm pw-field-wrap">
                                 <input type="password" name="password" id="new-user-password"
                                        class="form-control"
-                                       placeholder="Mín. 8: Mayús + Minús + Núm"
-                                       required minlength="8"
-                                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                                       title="Mínimo 8 caracteres con al menos una mayúscula, una minúscula y un número"
+                                       placeholder="Mín. 16: Mayús + Minús + Núm"
+                                       required minlength="16"
+                                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{16,}"
+                                       title="Mínimo 16 caracteres con al menos una mayúscula, una minúscula y un número"
                                        data-strength autocomplete="new-password">
                                 <button class="pw-toggle-btn" type="button" id="toggle-pw-new" title="Mostrar contraseña" aria-label="Mostrar contraseña">
                                     <i class="bi bi-eye"></i>
@@ -253,8 +253,15 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small text-muted" for="editPassword{{ $u->id }}">Nueva contraseña</label>
-                                    <input type="password" name="password" id="editPassword{{ $u->id }}" class="form-control form-control-sm"
-                                           placeholder="Mín. 8 caracteres" minlength="8">
+                                    <div class="pw-field-wrap">
+                                        <input type="password" name="password" id="editPassword{{ $u->id }}" class="form-control form-control-sm"
+                                               placeholder="Mín. 16 caracteres" minlength="16">
+                                        <button class="pw-toggle-btn" type="button"
+                                                data-pw-toggle="editPassword{{ $u->id }}"
+                                                title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <button type="submit" class="btn btn-primary btn-sm w-100">Guardar</button>
@@ -338,6 +345,19 @@
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-pw-toggle]').forEach(function(btn) {
+            var input = document.getElementById(btn.getAttribute('data-pw-toggle'));
+            if (!input) return;
+            input.addEventListener('input', function() {
+                btn.classList.toggle('visible', input.value.length > 0);
+            });
+            btn.addEventListener('click', function() {
+                var isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                btn.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        });
+
         var toggleBtn = document.getElementById('toggle-pw-new');
         var pwInput = document.getElementById('new-user-password');
         if (toggleBtn && pwInput) {
@@ -366,8 +386,8 @@
                 if (!v) { pwBox.style.display = 'none'; return; }
                 pwBox.style.display = 'block';
                 var s = 0;
-                if (v.length >= 8) s++;
-                if (v.length >= 12) s++;
+                if (v.length >= 16) s++;
+                if (v.length >= 20) s++;
                 if (/[A-Z]/.test(v)) s++;
                 if (/[a-z]/.test(v)) s++;
                 if (/[0-9]/.test(v)) s++;

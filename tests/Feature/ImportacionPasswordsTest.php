@@ -85,7 +85,7 @@ class ImportacionPasswordsTest extends TestCase
         $this->assertCount(25, array_unique($passwords));
     }
 
-    public function test_password_minimo_garantizado_es_12(): void
+    public function test_password_minimo_garantizado_es_16(): void
     {
         $this->seedRoles();
 
@@ -95,7 +95,23 @@ class ImportacionPasswordsTest extends TestCase
 
         $password = $metodo->invoke(null, 4);
 
-        $this->assertGreaterThanOrEqual(12, strlen($password));
+        $this->assertGreaterThanOrEqual(16, strlen($password));
+    }
+
+    public function test_importacion_rechaza_password_menor_a_16(): void
+    {
+        $this->seedRoles();
+
+        $archivo = $this->csvAsignaciones(
+            "nombre;apellido;email;cedula;rol;password\n"
+            ."Ana;Perez;ana@example.com;19876543;Docente;Corta123\n"
+        );
+
+        $resultado = app(ImportService::class)->importarUsuarios($archivo);
+
+        $this->assertSame(0, $resultado['created']);
+        $this->assertStringContainsString('mínimo 16', implode(' ', $resultado['errors']));
+        $this->assertDatabaseMissing('users', ['email' => 'ana@example.com']);
     }
 
     public function test_usuario_importado_nace_inactivo(): void

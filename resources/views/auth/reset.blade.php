@@ -26,8 +26,8 @@
             <div class="mb-3">
                 <label class="form-label">Nueva Contraseña</label>
                 <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" required
-                       minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                       title="Mínimo 8 caracteres con mayúscula, minúscula y número">
+                       minlength="16" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{16,}"
+                       title="Mínimo 16 caracteres con mayúscula, minúscula y número">
                 @error('password')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

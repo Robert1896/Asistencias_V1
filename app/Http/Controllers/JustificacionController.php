@@ -46,7 +46,7 @@ class JustificacionController extends Controller
 
         $filePath = null;
         if ($request->hasFile('archivo')) {
-            $filePath = $request->file('archivo')->store('justificaciones', 'local');
+            $filePath = $request->file('archivo')->store('justificaciones', 'justificaciones');
         }
 
         $asistencia->update([
@@ -77,13 +77,22 @@ class JustificacionController extends Controller
         $path = $asistencia->archivo_justificacion;
         abort_unless($path, 404);
 
-        if (Storage::disk('local')->missing($path) && Storage::disk('public')->exists($path)) {
-            Storage::disk('local')->put($path, Storage::disk('public')->get($path));
-            Storage::disk('public')->delete($path);
+        $disk = Storage::disk('justificaciones');
+
+        if ($disk->missing($path)) {
+            foreach (['local', 'public'] as $origen) {
+                if (Storage::disk($origen)->exists($path)) {
+                    $disk->put($path, Storage::disk($origen)->get($path));
+                    if ($origen === 'public') {
+                        Storage::disk('public')->delete($path);
+                    }
+                    break;
+                }
+            }
         }
 
-        abort_unless(Storage::disk('local')->exists($path), 404);
+        abort_unless($disk->exists($path), 404);
 
-        return Storage::disk('local')->download($path);
+        return $disk->download($path);
     }
 }

@@ -96,6 +96,7 @@ class FaseEHardeningTest extends TestCase
 
     public function test_la_justificacion_se_guarda_en_disco_privado(): void
     {
+        Storage::fake('justificaciones');
         Storage::fake('local');
         Storage::fake('public');
 
@@ -109,12 +110,14 @@ class FaseEHardeningTest extends TestCase
 
         $path = $asistencia->fresh()->archivo_justificacion;
         $this->assertNotNull($path);
-        Storage::disk('local')->assertExists($path);
+        Storage::disk('justificaciones')->assertExists($path);
+        Storage::disk('local')->assertMissing($path);
         Storage::disk('public')->assertMissing($path);
     }
 
     public function test_el_archivo_solo_lo_ve_el_dueno_o_uno_con_permiso(): void
     {
+        Storage::fake('justificaciones');
         Storage::fake('local');
         Storage::fake('public');
 
@@ -140,6 +143,7 @@ class FaseEHardeningTest extends TestCase
 
     public function test_archivos_heredados_en_disco_publico_se_mueven_a_privado(): void
     {
+        Storage::fake('justificaciones');
         Storage::fake('local');
         Storage::fake('public');
 
@@ -153,7 +157,8 @@ class FaseEHardeningTest extends TestCase
 
         $respuesta->assertOk();
         $this->assertStringContainsString('contenido antiguo', $respuesta->streamedContent());
-        Storage::disk('local')->assertExists('justificaciones/viejo.pdf');
+        Storage::disk('justificaciones')->assertExists('justificaciones/viejo.pdf');
+        Storage::disk('local')->assertMissing('justificaciones/viejo.pdf');
         Storage::disk('public')->assertMissing('justificaciones/viejo.pdf');
     }
 

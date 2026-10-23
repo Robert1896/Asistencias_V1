@@ -12,6 +12,8 @@ class UsuarioTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ADMIN_PASSWORD = 'AdminSeguro2026!X';
+
     private function seedRolesAndPermissions(): void
     {
         DB::table('roles')->insert([
@@ -35,7 +37,7 @@ class UsuarioTest extends TestCase
 
     private function createAdmin(): User
     {
-        return User::factory()->admin()->create();
+        return User::factory()->admin()->create(['password' => self::ADMIN_PASSWORD]);
     }
 
     public function test_admin_can_list_users(): void
@@ -61,7 +63,7 @@ class UsuarioTest extends TestCase
             'apellido' => 'Perez',
             'cedula' => '12345678',
             'email' => 'juan@test.com',
-            'password' => 'Password1',
+            'password' => 'UsuarioSeguro2026!X',
             'rol_id' => 3,
         ]);
 
@@ -101,10 +103,32 @@ class UsuarioTest extends TestCase
         $admin = $this->createAdmin();
         $user = User::factory()->create();
 
-        $response = $this->actingAs($admin)->delete(route('admin.usuarios.destroy', $user));
+        $response = $this->actingAs($admin)->delete(route('admin.usuarios.destroy', $user), [
+            'password_confirmacion' => self::ADMIN_PASSWORD,
+        ]);
 
         $response->assertRedirect(route('admin.usuarios'));
         $this->assertSoftDeleted('users', ['id' => $user->id]);
+    }
+
+    public function test_admin_delete_requires_correct_password(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.usuarios.destroy', $user))
+            ->assertSessionHasErrors('password_confirmacion');
+
+        $this->actingAs($admin)
+            ->delete(route('admin.usuarios.destroy', $user), [
+                'password_confirmacion' => 'ClaveIncorrecta2026!X',
+            ])
+            ->assertSessionHasErrors('password_confirmacion');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'deleted_at' => null]);
     }
 
     public function test_admin_cannot_delete_themselves(): void

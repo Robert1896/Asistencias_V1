@@ -9,23 +9,27 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DocenteSessionTimeout
 {
-    private const TIMEOUT_MINUTES = 3;
+    private const TIMEOUT_MINUTES = 5;
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->rol_id === 3) {
-            $lastActivity = session('last_activity');
+        if (Auth::check()) {
+            $rolId = (int) Auth::user()->rol_id;
 
-            if ($lastActivity && (now()->timestamp - $lastActivity) > (self::TIMEOUT_MINUTES * 60)) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+            if (in_array($rolId, [2, 3, 4], true)) {
+                $lastActivity = session('last_activity');
 
-                return redirect()->route('login')
-                    ->with('error', 'Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.');
+                if ($lastActivity && (now()->timestamp - $lastActivity) > (self::TIMEOUT_MINUTES * 60)) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    return redirect()->route('login')
+                        ->with('error', 'Tu sesión ha expirado por inactividad. Por favor, inicia sesión nuevamente.');
+                }
+
+                session(['last_activity' => now()->timestamp]);
             }
-
-            session(['last_activity' => now()->timestamp]);
         }
 
         return $next($request);

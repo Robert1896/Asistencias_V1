@@ -29,12 +29,13 @@
                         </div>
                     </div>
                 @else
-                    <div class="bloque-info" style="border-left-color: #6c757d;">
+                    <div class="bloque-info" style="border-left-color: #fd7e14; background: #fff4e6;">
                         <div class="d-flex align-items-center">
-                            <i class="bi bi-clock fs-4 text-secondary me-3"></i>
+                            <i class="bi bi-exclamation-triangle fs-4 text-warning me-3"></i>
                             <div>
-                                <small class="text-muted">Sin bloque activo</small>
-                                <div class="fw-bold text-secondary">Escaneando para registro general</div>
+                                <small class="text-muted">Sin bloques horarios asignados</small>
+                                <div class="fw-bold text-warning">Puede escanear el QR del salón de asistencia especial (ADHOC-001)</div>
+                                <small class="text-muted">Se registrará como asistencia especial.</small>
                             </div>
                         </div>
                     </div>

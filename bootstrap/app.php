@@ -82,34 +82,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ]);
             })->name('cron.import-datos');
 
-            Route::get('cron/reset-admin', function (\Illuminate\Http\Request $request) use ($cronSecret) {
-                $cronSecret($request);
-
-                $email = (string) $request->query('email');
-                $nueva = (string) $request->query('password');
-
-                abort_if($email === '' || $nueva === '', 422, 'Falta email o password.');
-                abort_if(strlen($nueva) < 16, 422, 'La contrasena debe tener al menos 16 caracteres.');
-                abort_if(!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $nueva), 422, 'Debe incluir mayuscula, minuscula y numero.');
-
-                $user = \App\Models\User::where('email', $email)->first();
-                abort_unless($user, 404, 'Usuario no encontrado.');
-
-                $user->forceFill([
-                    'password'              => \Illuminate\Support\Facades\Hash::make($nueva),
-                    'two_factor_code'       => null,
-                    'two_factor_expires_at' => null,
-                ])->saveQuietly();
-
-                $user->invalidarOtrasSesiones();
-
-                return response()->json([
-                    'ok'               => true,
-                    'email'            => $user->email,
-                    'user_id'          => $user->id,
-                    'hash_actualizado' => str_starts_with((string) $user->fresh()->password, '$2y$'),
-                ]);
-            })->name('cron.reset-admin');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
