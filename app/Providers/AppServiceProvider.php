@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,6 +16,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->asegurarCachePersistente();
+
         Paginator::useBootstrapFive();
 
         RateLimiter::for('api', function ($user) {
@@ -38,6 +41,41 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->configurarCorreo();
+    }
+
+    /**
+     * Garantiza que las tablas del cache en base de datos existan.
+     * En Vercel no se ejecutan migraciones al desplegar; si la tabla falta,
+     * el rate limiter (login) lanza un error 500. Si no se pueden crear,
+     * se degrada a cache en memoria para no romper la aplicación.
+     */
+    private function asegurarCachePersistente(): void
+    {
+        if (config('cache.default') !== 'database') {
+            return;
+        }
+
+        try {
+            if (Schema::hasTable('cache')) {
+                return;
+            }
+
+            Schema::create('cache', function (Blueprint $table) {
+                $table->string('key')->primary();
+                $table->mediumText('value');
+                $table->bigInteger('expiration')->index();
+            });
+
+            if (!Schema::hasTable('cache_locks')) {
+                Schema::create('cache_locks', function (Blueprint $table) {
+                    $table->string('key')->primary();
+                    $table->string('owner');
+                    $table->bigInteger('expiration')->index();
+                });
+            }
+        } catch (\Throwable $e) {
+            config(['cache.default' => 'array']);
+        }
     }
 
     private function configurarCorreo(): void
