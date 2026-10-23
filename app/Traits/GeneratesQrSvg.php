@@ -19,6 +19,9 @@ trait GeneratesQrSvg
 
     private function renderSvg(string $data): string
     {
+        if ($data === '') {
+            $data = ' ';
+        }
         $qr = new \chillerlan\QRCode\QRCode($this->qrOptions());
         $svg = $qr->render($data);
         return str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $svg);
