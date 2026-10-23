@@ -4,7 +4,16 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{{ route('empleado.dashboard') }}" class="btn btn-outline-secondary btn-sm">← Mi Panel</a>
+    @php
+        $backRoute = match(auth()->user()->rol_id) {
+            1 => 'admin.dashboard',
+            2 => 'dashboard',
+            3 => 'empleado.dashboard',
+            4 => 'empleado.dashboard',
+            default => 'login'
+        };
+    @endphp
+    <a href="{{ route($backRoute) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Mi Panel</a>
 </div>
 
 <div class="row justify-content-center">
@@ -33,7 +42,16 @@
                 </div>
             </div>
             <div class="card-footer bg-white text-center">
-                <a href="{{ route('empleado.dashboard') }}" class="btn btn-outline-secondary btn-sm">← Mi Panel</a>
+                @php
+                    $backRoute = match(auth()->user()->rol_id) {
+                        1 => 'admin.dashboard',
+                        2 => 'dashboard',
+                        3 => 'empleado.dashboard',
+                        4 => 'empleado.dashboard',
+                        default => 'login'
+                    };
+                @endphp
+                <a href="{{ route($backRoute) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Mi Panel</a>
             </div>
         </div>
     </div>
