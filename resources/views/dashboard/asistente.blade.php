@@ -39,6 +39,17 @@
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
+        <a href="{{ route('qr.dinamico.page') }}" class="text-decoration-none">
+            <div class="card nav-btn grad-qr h-100">
+                <div class="card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="icon-wrap"><i class="bi bi-qr-code"></i></div>
+                    <h6 class="fw-bold mb-0">Mi QR</h6>
+                    <small class="text-muted">Código dinámico</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4">
         <a href="{{ route('estacion.index') }}" class="text-decoration-none">
             <div class="card nav-btn grad-escanear h-100">
                 <div class="card-body text-center d-flex flex-column align-items-center justify-content-center py-4">
@@ -46,6 +57,9 @@
                     <h6 class="fw-bold mb-0">Estación QR</h6>
                     <small class="text-muted">Registrar entrada/salida</small>
                 </div>
+            </div>
+        </a>
+    </div>
             </div>
         </a>
     </div>

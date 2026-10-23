@@ -17,7 +17,14 @@ class QrController extends Controller
     public function showPage(): View
     {
         $user = Auth::user();
-        return view('auth.qr_dinamico', compact('user'));
+        $rolId = (int) $user->rol_id;
+
+        $backRoute = match ($rolId) {
+            3 => 'empleado.dashboard',
+            default => 'dashboard',
+        };
+
+        return view('auth.qr_dinamico', compact('user', 'backRoute'));
     }
 
     public function show(User $user): Response

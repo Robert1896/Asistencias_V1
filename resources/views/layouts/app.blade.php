@@ -41,8 +41,8 @@
             {{-- Desktop: collapse normal --}}
             <div class="collapse navbar-collapse d-none d-lg-block" id="navbarMain">
                 <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="{{ route('qr.dinamico.page') }}"><i class="bi bi-qr-code me-1"></i>Mi QR</a></li>
                     @if ($esDocente)
-                        <li class="nav-item"><a class="nav-link" href="{{ route('qr.dinamico.page') }}"><i class="bi bi-qr-code me-1"></i>Mi QR</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('docente.escanear.salon') }}"><i class="bi bi-upc-scan me-1"></i>Escanear</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('empleado.horario') }}"><i class="bi bi-calendar-week me-1"></i>Horario</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('empleado.estadisticas') }}"><i class="bi bi-bar-chart-line me-1"></i>Estadísticas</a></li>
@@ -140,8 +140,8 @@
         </div>
         <div class="offcanvas-body d-flex flex-column p-0">
             <nav class="flex-column flex-grow-1">
+                <a class="offcanvas-nav-link" href="{{ route('qr.dinamico.page') }}"><i class="bi bi-qr-code"></i>Mi QR</a>
                 @if ($esDocente)
-                    <a class="offcanvas-nav-link" href="{{ route('qr.dinamico.page') }}"><i class="bi bi-qr-code"></i>Mi QR</a>
                     <a class="offcanvas-nav-link" href="{{ route('docente.escanear.salon') }}"><i class="bi bi-upc-scan"></i>Escanear</a>
                     <a class="offcanvas-nav-link" href="{{ route('empleado.horario') }}"><i class="bi bi-calendar-week"></i>Horario</a>
                     <a class="offcanvas-nav-link" href="{{ route('empleado.estadisticas') }}"><i class="bi bi-bar-chart-line"></i>Estadísticas</a>

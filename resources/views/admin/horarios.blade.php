@@ -9,10 +9,10 @@
     <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Dashboard</a>
 </div>
 
-<ul class="nav nav-tabs mb-4">
-    <li class="nav-item">
-        <a class="nav-link {{ $tab === 'administrativos' ? 'active' : '' }}"
-           href="{{ route('admin.horarios', ['tab' => 'administrativos']) }}">Horarios Administrativos</a>
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {{ $tab === 'administrativos' ? 'active' : '' }}"
+               href="{{ route('admin.horarios', ['tab' => 'administrativos']) }}">Horarios Fijos (Administrativos y Asistentes)</a>
     </li>
     <li class="nav-item">
         <a class="nav-link {{ $tab === 'docentes' ? 'active' : '' }}"
@@ -24,7 +24,7 @@
 <div class="row">
     <div class="col-md-5">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white"><h6 class="mb-0">Asignar / Editar Turno</h6></div>
+            <div class="card-header bg-white"><h6 class="mb-0">Asignar / Editar Turno (Administrativo / Asistente)</h6></div>
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.horarios.guardar-admin') }}">                    @csrf
                     @if ($errors->any())
@@ -81,7 +81,7 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table table-hover mb-0" role="table" aria-label="Horarios base">
+                <table class="table table-hover mb-0" role="table" aria-label="Horarios fijos">
                     <thead>
                         <tr><th>Empleado</th><th>Turno</th><th>Entrada</th><th>Salida</th><th>Días</th><th></th></tr>
                     </thead>

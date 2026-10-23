@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class HorarioController extends Controller
@@ -19,13 +20,15 @@ class HorarioController extends Controller
     {
         $tab = $request->query('tab', 'administrativos');
 
-        $administrativos = User::where('rol_id', 2)->where('estatus', 'activo')
+        $administrativos = User::whereIn('rol_id', [2, 4])->where('estatus', 'activo')
             ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
 
         $docentes = User::where('rol_id', 3)->where('estatus', 'activo')
             ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
 
-        $horariosAdmin = HorarioAdministrativo::with('usuario')->get();
+        $horariosAdmin = HorarioAdministrativo::with('usuario')->whereHas('usuario', function ($q) {
+            $q->whereIn('rol_id', [2, 4]);
+        })->get();
         $cargasDocentes = CargaAcademicaDocente::with('usuario')->get();
 
         return view('admin.horarios', compact(
@@ -43,7 +46,9 @@ class HorarioController extends Controller
     public function guardarAdmin(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'usuario_id'   => 'required|integer|exists:users,id',
+            'usuario_id'   => ['required', 'integer', Rule::exists('users', 'id')->where(function ($q) {
+                $q->whereIn('rol_id', [2, 4])->where('estatus', 'activo');
+            })],
             'turno'        => 'required|in:Matutino,Vespertino',
             'hora_entrada' => 'required|date_format:H:i',
             'hora_salida'  => 'required|date_format:H:i',

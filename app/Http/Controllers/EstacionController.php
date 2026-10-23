@@ -115,6 +115,47 @@ class EstacionController extends Controller
                 ->first();
         }
 
+        if (!$usuario && str_starts_with($qrHash, 'DynQR:')) {
+            $parts = explode(':', $qrHash);
+            if (count($parts) === 4) {
+                $userId = (int) $parts[1];
+                $usuario = User::where('id', $userId)
+                    ->where('estatus', 'activo')
+                    ->with('rol')
+                    ->first();
+            }
+        }
+
+        if (!$usuario && str_starts_with($qrHash, 'DynQR:')) {
+            $parts = explode(':', $qrHash);
+            if (count($parts) === 4) {
+                $userId = (int) $parts[1];
+                $token = $parts[2];
+
+                $qrToken = \App\Models\QrToken::where('user_id', $userId)
+                    ->where('token', $token)
+                    ->first();
+
+                if ($qrToken && $qrToken->expires_at && $qrToken->expires_at->timestamp >= now()->timestamp) {
+                    $qrToken->delete();
+                    $usuario = User::where('id', $userId)
+                        ->where('estatus', 'activo')
+                        ->with('rol')
+                        ->first();
+                } elseif ($qrToken) {
+                    $qrToken->delete();
+                }
+            }
+        }
+
+        if ($usuario && (int) $usuario->rol_id === 1) {
+            // Permitir marcaje con QR dinámico para superadmin
+        }
+
+        if ($usuario && (int) $usuario->rol_id === 1 && blank($usuario->codigo_qr_estatico)) {
+            // Permitir superadmin con solo QR dinámico
+        }
+
         if (!$usuario) {
             ActivityLog::log('scan_fallido', "QR no reconocido desde IP: {$ip}", 'seguridad', [
                 'ip'     => $ip,
@@ -134,12 +175,15 @@ class EstacionController extends Controller
         $horaAhora = now()->format('H:i:s');
         $diaSemana = now()->dayOfWeek;
 
-        $esDocente        = $usuario->rol_id === 3;
-        $esAdministrativo = $usuario->rol_id === 2;
+        $rolId            = (int) $usuario->rol_id;
+        $esDocente        = $rolId === 3;
+        $esAdministrativo = $rolId === 2;
+        $esAsistente      = $rolId === 4;
+        $esSuperadmin     = $rolId === 1;
 
         if ($respuesta = $this->verificarDiaHabil()) return $respuesta;
 
-        if ($esAdministrativo) {
+        if ($esAdministrativo || $esAsistente || $esSuperadmin) {
             $resultado = $this->attendanceService->procesarAdministrativo($usuario, $qrHash, $ip);
             return response()->json($resultado);
         }
