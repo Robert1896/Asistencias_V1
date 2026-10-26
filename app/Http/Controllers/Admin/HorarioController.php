@@ -24,7 +24,9 @@ class HorarioController extends Controller
             ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
 
         $docentes = User::where('rol_id', 3)->where('estatus', 'activo')
-            ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
+            ->orderBy('nombre_completo')
+            ->with(['horariosDocente.horario', 'horariosDocente.salon', 'cargaAcademica'])
+            ->get();
 
         $horariosAdmin = HorarioAdministrativo::with('usuario')->whereHas('usuario', function ($q) {
             $q->whereIn('rol_id', [2, 4, 5]);

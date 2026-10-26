@@ -16,7 +16,7 @@
     </li>
     <li class="nav-item">
         <a class="nav-link {{ $tab === 'docentes' ? 'active' : '' }}"
-           href="{{ route('admin.horarios', ['tab' => 'docentes']) }}">Carga Académica Docente</a>
+           href="{{ route('admin.horarios', ['tab' => 'docentes']) }}">Horarios Personal Docente</a>
     </li>
 </ul>
 
@@ -118,77 +118,43 @@
 </div>
 @else
 <div class="row">
-    <div class="col-md-5">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white"><h6 class="mb-0">Agregar Carga Académica</h6></div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('admin.horarios.guardar-carga') }}">
-                    @csrf
-                    @if ($errors->any())
-                        <div class="alert alert-danger py-1 px-3 small mb-2">
-                            @foreach ($errors->all() as $error)
-                                <span class="me-2">{{ $error }}</span>@if(!$loop->last)&middot;@endif
-                            @endforeach
-                        </div>
-                    @endif
-                    <div class="mb-3">
-                        <label class="form-label">Docente</label>
-                        <select name="usuario_id" class="form-select @error('usuario_id') is-invalid @enderror" required>
-                            <option value="">Seleccione...</option>
-                            @foreach ($docentes as $d)
-                                <option value="{{ $d->id }}">{{ $d->nombre_completo }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Materia</label>
-                        <input type="text" name="materia" class="form-control @error('materia') is-invalid @enderror" placeholder="Ej: Matemáticas I" required>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label class="form-label">Tipo</label>
-                            <select name="tipo" class="form-select">
-                                <option value="Clase">Clase</option>
-                                <option value="Coordinacion">Coordinación</option>
-                                <option value="Laboratorio">Laboratorio</option>
-                                <option value="Apoyo">Apoyo</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <label class="form-label">Horas/Semana</label>
-                            <input type="number" step="0.5" name="horas_semanales" class="form-control @error('horas_semanales') is-invalid @enderror" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Agregar</button>
-                </form>
+    <div class="col-12">
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Horarios del Personal Docente</h6>
+                <a href="{{ route('admin.docentes.horarios') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-calendar-range me-1"></i>Ver / Modificar horarios completos</a>
             </div>
         </div>
-    </div>
-    <div class="col-md-7">
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table table-hover mb-0" role="table" aria-label="Bloques horarios">
-                    <thead>
-                        <tr><th>Docente</th><th>Materia</th><th>Tipo</th><th>Hrs/Sem</th><th></th></tr>
-                    </thead>
+                <table class="table table-hover mb-0" role="table" aria-label="Horarios docentes">
                     <tbody>
-                        @forelse ($cargasDocentes as $c)
+                        @forelse ($docentes as $d)
                         <tr>
-                            <td>{{ $c->usuario->nombre_completo }}</td>
-                            <td>{{ $c->materia }}</td>
-                            <td><span class="badge bg-secondary">{{ $c->tipo }}</span></td>
-                            <td>{{ $c->horas_semanales }}</td>
+                            <td>{{ $d->nombre_completo }}</td>
+                            <td>{{ $d->email }}</td>
+                            <td><span class="badge bg-info">{{ $d->horariosDocente->count() }} bloques</span></td>
                             <td>
-                                <form method="POST" action="{{ route('admin.horarios.eliminar-carga', $c) }}"
-                                      class="d-inline" data-confirm="¿Eliminar esta carga?">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">✕</button>
-                                </form>
+                                @if ($d->horariosDocente->isEmpty())
+                                    <span class="text-muted small">Sin horarios asignados</span>
+                                @else
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach ($d->horariosDocente->sortBy(fn($h)=>$h->dia_semana.(string)$h->hora_inicio) as $hd)
+                                            <span class="badge bg-light text-dark border">
+                                                {{ \App\Models\Horario::DIAS[$hd->dia_semana] ?? $hd->dia_semana }} {{ substr($hd->hora_inicio,0,5) }}-{{ substr($hd->hora_fin,0,5) }}
+                                                @if($hd->pivot->salon_id && $hd->salon) · {{ $hd->salon->nombre }} @endif
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ route('admin.docentes.horarios.edit', $d) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i> Modificar</a>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="text-muted text-center py-3">Sin cargas registradas.</td></tr>
+                        <tr><td colspan="5" class="text-muted text-center py-3">No hay docentes activos.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
