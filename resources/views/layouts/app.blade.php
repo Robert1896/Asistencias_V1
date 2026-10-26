@@ -439,6 +439,12 @@
             }
         })();
     </script>
+    <footer class="mt-auto py-3 border-top bg-white">
+        <div class="container text-center small text-muted">
+            <div>&copy; {{ date('Y') }} Universidad. Todos los derechos reservados.</div>
+            <div>sadi.uptag1</div>
+        </div>
+    </footer>
     @stack('scripts')
 </body>
 </html>
