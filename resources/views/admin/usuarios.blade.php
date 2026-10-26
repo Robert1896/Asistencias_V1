@@ -110,39 +110,6 @@
     </div>
 </div>
 
-<div class="card shadow border mb-3">
-    <div class="card-header bg-primary text-white py-2"><strong><i class="bi bi-search me-2"></i>Búsqueda y filtros</strong></div>
-    <div class="card-body">
-        <form method="GET" action="{{ route('admin.usuarios') }}" class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label small mb-1" for="filtroBuscar">Buscar</label>
-                <input type="text" name="buscar" id="filtroBuscar" class="form-control form-control-sm" value="{{ request('buscar') }}" placeholder="Nombre, apellido, cédula, correo o docente">
-            </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label small mb-1" for="filtroRol">Rol</label>
-                <select name="rol_id" id="filtroRol" class="form-select form-select-sm">
-                    <option value="">Todos los roles</option>
-                    @foreach ($roles as $rol)
-                        <option value="{{ $rol->id }}" {{ request('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small mb-1" for="filtroEstatus">Estatus</label>
-                <select name="estatus" id="filtroEstatus" class="form-select form-select-sm">
-                    <option value="">Todos</option>
-                    <option value="activo" {{ request('estatus') === 'activo' ? 'selected' : '' }}>Activo</option>
-                    <option value="inactivo" {{ request('estatus') === 'inactivo' ? 'selected' : '' }}>Inactivo</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
-                <a href="{{ route('admin.usuarios') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Limpiar</a>
-            </div>
-        </form>
-    </div>
-</div>
-
 {{-- ═══ IMPORTAR ═══ --}}
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -180,6 +147,39 @@
                 </div>
             @endif
         </div>
+    </div>
+</div>
+
+<div class="card shadow border mb-3">
+    <div class="card-header bg-primary text-white py-2"><strong><i class="bi bi-search me-2"></i>Búsqueda y filtros</strong></div>
+    <div class="card-body">
+        <form method="GET" action="{{ route('admin.usuarios') }}" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label small mb-1" for="filtroBuscar">Buscar</label>
+                <input type="text" name="buscar" id="filtroBuscar" class="form-control form-control-sm" value="{{ request('buscar') }}" placeholder="Nombre, apellido, cédula, correo o docente">
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small mb-1" for="filtroRol">Rol</label>
+                <select name="rol_id" id="filtroRol" class="form-select form-select-sm">
+                    <option value="">Todos los roles</option>
+                    @foreach ($roles as $rol)
+                        <option value="{{ $rol->id }}" {{ request('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small mb-1" for="filtroEstatus">Estatus</label>
+                <select name="estatus" id="filtroEstatus" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="activo" {{ request('estatus') === 'activo' ? 'selected' : '' }}>Activo</option>
+                    <option value="inactivo" {{ request('estatus') === 'inactivo' ? 'selected' : '' }}>Inactivo</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
+                <a href="{{ route('admin.usuarios') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Limpiar</a>
+            </div>
+        </form>
     </div>
 </div>
 
