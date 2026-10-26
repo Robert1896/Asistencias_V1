@@ -10,18 +10,38 @@ use App\Models\Rol;
 use App\Models\User;
 use App\Notifications\AsistenciaNotificacion;
 use App\Services\ImportService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class UsuarioController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $usuarios = User::with('rol')->orderBy('id')->paginate(15);
+        $query = User::with('rol');
+
+        if ($request->filled('buscar')) {
+            $buscar = trim($request->input('buscar'));
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre', 'like', '%' . $buscar . '%')
+                    ->orWhere('apellido', 'like', '%' . $buscar . '%')
+                    ->orWhere('cedula', 'like', '%' . $buscar . '%')
+                    ->orWhere('email', 'like', '%' . $buscar . '%')
+                    ->orWhereRaw("CONCAT(COALESCE(nombre,''), ' ', COALESCE(apellido,'')) LIKE ?", ['%' . $buscar . '%']);
+            });
+        }
+
+        if ($request->filled('rol_id')) {
+            $query->where('rol_id', $request->input('rol_id'));
+        }
+
+        if ($request->filled('estatus')) {
+            $query->where('estatus', $request->input('estatus'));
+        }
+
+        $usuarios = $query->orderBy('id')->paginate(15)->withQueryString();
         $roles    = Rol::orderBy('id')->get();
+
         return view('admin.usuarios', compact('usuarios', 'roles'));
     }
 
@@ -37,7 +57,6 @@ class UsuarioController extends Controller
             'email'              => $data['email'],
             'rol_id'             => $data['rol_id'],
             'estatus'            => 'activo',
-            'codigo_qr_estatico' => ($data['rol_id'] == 3 && DB::getDriverName() === 'mysql') ? null : Str::uuid()->toString(),
         ]);
 
         ActivityLog::log('usuario_crear', "Creó el usuario {$data['email']}", 'usuarios', ['email' => $data['email']]);

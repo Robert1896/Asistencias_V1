@@ -5,8 +5,41 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-3"><i class="bi bi-people me-2"></i>Gestión de Usuarios</h4>
+    <h1 class="h4 mb-0"><i class="bi bi-people me-2"></i>Gestión de Usuarios</h1>
     <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Dashboard</a>
+</div>
+
+<div class="card shadow border mb-3">
+    <div class="card-header bg-primary text-white py-2"><strong><i class="bi bi-search me-2"></i>Búsqueda y filtros</strong></div>
+    <div class="card-body">
+        <form method="GET" action="{{ route('admin.usuarios') }}" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label small mb-1" for="filtroBuscar">Buscar</label>
+                <input type="text" name="buscar" id="filtroBuscar" class="form-control form-control-sm" value="{{ request('buscar') }}" placeholder="Nombre, apellido, cédula, correo o docente">
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small mb-1" for="filtroRol">Rol</label>
+                <select name="rol_id" id="filtroRol" class="form-select form-select-sm">
+                    <option value="">Todos los roles</option>
+                    @foreach ($roles as $rol)
+                        <option value="{{ $rol->id }}" {{ request('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small mb-1" for="filtroEstatus">Estatus</label>
+                <select name="estatus" id="filtroEstatus" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="activo" {{ request('estatus') === 'activo' ? 'selected' : '' }}>Activo</option>
+                    <option value="inactivo" {{ request('estatus') === 'inactivo' ? 'selected' : '' }}>Inactivo</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
+                <a href="{{ route('admin.usuarios') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Limpiar</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 {{-- ═══ CREAR USUARIO ═══ --}}
@@ -67,8 +100,8 @@
                     <hr class="mt-1 mb-2">
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <label class="form-label small">Rol *</label>
-                            <select name="rol_id" class="form-select form-select-sm" required>
+                            <label class="form-label small" for="nuevoRol">Rol *</label>
+                            <select name="rol_id" id="nuevoRol" class="form-select form-select-sm" required>
                                 <option value="">Seleccionar rol...</option>
                                 @foreach ($roles as $rol)
                                     @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
@@ -79,7 +112,7 @@
                             <div style="height:22px;"></div>
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label small">Contraseña *</label>
+                            <label class="form-label small" for="new-user-password">Contraseña *</label>
                             <div class="input-group input-group-sm pw-field-wrap">
                                 <input type="password" name="password" id="new-user-password"
                                        class="form-control"
@@ -157,14 +190,13 @@
             <table class="table table-hover mb-0" role="table" aria-label="Usuarios del sistema">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Cédula</th>
-                        <th>Correo</th>
-                        <th>Rol</th>
-                        <th>Estatus</th>
-                        <th>QR</th>
-                        <th>Acciones</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Cédula</th>
+                        <th scope="col">Correo</th>
+                        <th scope="col">Rol</th>
+                        <th scope="col">Estatus</th>
+                        <th scope="col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -190,17 +222,7 @@
                             <span class="badge bg-{{ $u->estatus === 'activo' ? 'success' : 'danger' }}">{{ $u->estatus }}</span>
                             @endif
                         </td>
-                        <td><code style="font-size:0.65rem;">{{ $u->codigo_qr_estatico ?? '—' }}</code></td>
                         <td>
-                            @if ($u->codigo_qr_estatico)
-                            <button type="button" class="btn btn-outline-success btn-sm"
-                                    data-ver-qr="{{ $u->id }}"
-                                    data-ver-qr-nombre="{{ $u->nombre_completo }}">
-                                <i class="bi bi-qr-code"></i>
-                            </button>
-                            @else
-                            <span class="badge bg-secondary" title="Este usuario no tiene QR estático (usa QR dinámico)">Sin QR</span>
-                            @endif
                             <a href="#" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
                                data-bs-target="#edit-{{ $u->id }}" aria-label="Editar"><i class="bi bi-pencil"></i></a>
                             @if ($u->id !== auth()->id())
@@ -213,7 +235,7 @@
                         </td>
                     </tr>
                     <tr class="collapse" id="edit-{{ $u->id }}">
-                        <td colspan="8" class="bg-light">
+                        <td colspan="7" class="bg-light">
                             <form method="POST" action="{{ route('admin.usuarios.update', $u) }}" class="row g-2 p-2 align-items-end" data-validate>
                                 @csrf @method('PUT')
                                 <div class="col-md-2">
@@ -274,39 +296,6 @@
             </table>
             <div class="d-flex justify-content-center mt-3">
                 {{ $usuarios->links() }}
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Modal QR --}}
-<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title" id="qrModalLabel"><i class="bi bi-qr-code me-2"></i>Código QR</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <div id="qrSpinner" class="py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Generando...</span>
-                    </div>
-                    <p class="text-muted small mt-2">Generando código QR...</p>
-                </div>
-                <div id="qrContent" style="display:none;">
-                    <div id="qrImageContainer" class="mb-3"></div>
-                    <p class="fw-bold mb-0" id="qrUserName"></p>
-                    <code class="small text-muted" id="qrHash"></code>
-                    <div class="mt-3">
-                        <a id="qrDownloadLink" href="#" download="qr.png" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-download"></i> Descargar PNG
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -405,37 +394,6 @@
             });
         }
 
-        var qrUrlBase = '{{ url("qr") }}';
-        window.verQR = function(userId, userName) {
-            document.getElementById('qrModalLabel').textContent = 'Código QR - ' + userName;
-            document.getElementById('qrSpinner').style.display = 'block';
-            document.getElementById('qrContent').style.display = 'none';
-            document.getElementById('qrImageContainer').innerHTML = '';
-            var modal = new bootstrap.Modal(document.getElementById('qrModal'));
-            modal.show();
-            var img = new Image();
-            img.onload = function () {
-                document.getElementById('qrSpinner').style.display = 'none';
-                document.getElementById('qrContent').style.display = 'block';
-                document.getElementById('qrImageContainer').innerHTML = '';
-                document.getElementById('qrImageContainer').appendChild(img);
-                document.getElementById('qrUserName').textContent = userName;
-            };
-            img.onerror = function () {
-                document.getElementById('qrSpinner').style.display = 'none';
-                document.getElementById('qrContent').style.display = 'block';
-                document.getElementById('qrImageContainer').innerHTML = '<div class="alert alert-danger py-2">Error al generar el QR</div>';
-            };
-            img.src = qrUrlBase + '/' + userId;
-            img.alt = 'QR - ' + userName;
-            img.className = 'img-fluid border rounded p-2 bg-white';
-            img.style.maxWidth = '280px';
-            fetch(img.src).then(function(r){ return r.blob(); }).then(function(blob) {
-                document.getElementById('qrDownloadLink').href = URL.createObjectURL(blob);
-                document.getElementById('qrDownloadLink').download = 'qr-' + userId + '.svg';
-            }).catch(function () {});
-            document.getElementById('qrHash').textContent = 'Cargando...';
-        };
     });
 </script>
 @endpush
