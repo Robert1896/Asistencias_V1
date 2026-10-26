@@ -20,14 +20,14 @@ class HorarioController extends Controller
     {
         $tab = $request->query('tab', 'administrativos');
 
-        $administrativos = User::whereIn('rol_id', [2, 4])->where('estatus', 'activo')
+        $administrativos = User::whereIn('rol_id', [2, 4, 5])->where('estatus', 'activo')
             ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
 
         $docentes = User::where('rol_id', 3)->where('estatus', 'activo')
             ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
 
         $horariosAdmin = HorarioAdministrativo::with('usuario')->whereHas('usuario', function ($q) {
-            $q->whereIn('rol_id', [2, 4]);
+            $q->whereIn('rol_id', [2, 4, 5]);
         })->get();
         $cargasDocentes = CargaAcademicaDocente::with('usuario')->get();
 
@@ -47,7 +47,7 @@ class HorarioController extends Controller
     {
         $data = $request->validate([
             'usuario_id'   => ['required', 'integer', Rule::exists('users', 'id')->where(function ($q) {
-                $q->whereIn('rol_id', [2, 4])->where('estatus', 'activo');
+                $q->whereIn('rol_id', [2, 4, 5])->where('estatus', 'activo');
             })],
             'turno'        => 'required|in:Matutino,Vespertino',
             'hora_entrada' => 'required|date_format:H:i',

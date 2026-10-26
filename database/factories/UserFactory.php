@@ -23,7 +23,6 @@ class UserFactory extends Factory
             'cedula' => fake()->unique()->numerify('#######'),
             'rol_id' => Rol::factory(),
             'estatus' => 'activo',
-            'codigo_qr_estatico' => DB::getDriverName() === 'mysql' ? null : Str::uuid()->toString(),
         ];
     }
 
@@ -36,7 +35,6 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'rol_id' => 1,
-            'codigo_qr_estatico' => Str::uuid()->toString(),
         ]);
     }
 
@@ -44,7 +42,6 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'rol_id' => 3,
-            'codigo_qr_estatico' => DB::getDriverName() === 'mysql' ? null : Str::uuid()->toString(),
         ]);
     }
 }

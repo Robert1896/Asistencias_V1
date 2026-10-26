@@ -26,7 +26,6 @@ class User extends Authenticatable
         'email',
         'rol_id',
         'estatus',
-        'codigo_qr_estatico',
         'two_factor_enabled',
         'two_factor_code',
         'two_factor_expires_at',

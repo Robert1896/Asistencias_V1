@@ -6,6 +6,8 @@ use App\Models\ActivityLog;
 use App\Models\Asistencia;
 use App\Models\Departamento;
 use App\Models\DiaFeriado;
+use App\Models\DocenteHorarioPivot;
+use App\Models\Horario;
 use App\Models\Salon;
 use App\Models\User;
 use App\Services\AttendanceService;
@@ -179,11 +181,12 @@ class EstacionController extends Controller
         $esDocente        = $rolId === 3;
         $esAdministrativo = $rolId === 2;
         $esAsistente      = $rolId === 4;
+        $esTecnico        = $rolId === 5;
         $esSuperadmin     = $rolId === 1;
 
         if ($respuesta = $this->verificarDiaHabil()) return $respuesta;
 
-        if ($esAdministrativo || $esAsistente || $esSuperadmin) {
+        if ($esAdministrativo || $esAsistente || $esTecnico || $esSuperadmin) {
             $resultado = $this->attendanceService->procesarAdministrativo($usuario, $qrHash, $ip);
             return response()->json($resultado);
         }
@@ -374,5 +377,79 @@ class EstacionController extends Controller
 
         $resultado = $this->attendanceService->registrarManual($operador, $empleado, $request->tipo, $request->ip());
         return response()->json($resultado);
+    }
+
+    public function reasignarSalon(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id'  => 'required|exists:users,id',
+            'salon_id' => 'required|exists:salones,id',
+        ]);
+
+        $operador = Auth::user();
+        $usuario  = User::findOrFail($request->user_id);
+
+        if (!$operador) {
+            return response()->json(['ok' => false, 'mensaje' => 'No autenticado.', 'tipo' => 'error'], 401);
+        }
+
+        $rolOp = (int) $operador->rol_id;
+        if (!in_array($rolOp, [1, 2, 4, 5], true) && !$operador->can('estacion_operar')) {
+            return response()->json(['ok' => false, 'mensaje' => 'Sin permiso para reasignar salón.', 'tipo' => 'error'], 403);
+        }
+
+        $hoy       = today()->toDateString();
+        $horaAhora = now()->format('H:i:s');
+        $diaSemana = (int) now()->dayOfWeek;
+
+        $asignacion = DocenteHorarioPivot::with(['horario', 'salon'])
+            ->where('user_id', $usuario->id)
+            ->whereHas('horario', function ($q) use ($diaSemana, $horaAhora) {
+                $q->where('dia_semana', $diaSemana)
+                    ->where('hora_inicio', '<=', $horaAhora)
+                    ->where('hora_fin', '>', $horaAhora);
+            })
+            ->first();
+
+        if (!$asignacion) {
+            return response()->json(['ok' => false, 'mensaje' => 'No se encontró una asignación activa para reasignar.', 'tipo' => 'error'], 404);
+        }
+
+        $salonNuevo = Salon::findOrFail($request->salon_id);
+        if ($asignacion->salon_id == $salonNuevo->id) {
+            return response()->json(['ok' => false, 'mensaje' => 'El salón seleccionado es el mismo.', 'tipo' => 'error'], 422);
+        }
+
+        $colision = DocenteHorarioPivot::where('salon_id', $salonNuevo->id)
+            ->whereHas('horario', function ($q) use ($diaSemana, $horaAhora) {
+                $q->where('dia_semana', $diaSemana)
+                    ->where('hora_inicio', '<=', $horaAhora)
+                    ->where('hora_fin', '>', $horaAhora);
+            })
+            ->where('id', '!=', $asignacion->id)
+            ->exists();
+
+        if ($colision) {
+            return response()->json(['ok' => false, 'mensaje' => 'El salón seleccionado ya está ocupado en este horario.', 'tipo' => 'error'], 422);
+        }
+
+        $salonAnterior = $asignacion->salon_id;
+        $asignacion->salon_id = $salonNuevo->id;
+        $asignacion->save();
+
+        ActivityLog::log('salon_reasignar', "Reasignación de salón desde Estación Central", 'estacion', [
+            'operador_id'      => $operador->id,
+            'usuario_id'       => $usuario->id,
+            'asignacion_id'    => $asignacion->id,
+            'salon_anterior'   => $salonAnterior,
+            'salon_nuevo'      => $salonNuevo->id,
+            'salon_nuevo_nombre' => $salonNuevo->nombre,
+        ]);
+
+        return response()->json([
+            'ok'      => true,
+            'mensaje' => "Salón reasignado a {$salonNuevo->nombre}.",
+            'tipo'    => 'success',
+        ]);
     }
 }

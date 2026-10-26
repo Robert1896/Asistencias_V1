@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 2, 'nombre' => 'Administrativo', 'descripcion' => 'Personal de oficina con turno fijo'],
             ['id' => 3, 'nombre' => 'Docente',        'descripcion' => 'Profesores con carga académica variable'],
             ['id' => 4, 'nombre' => 'Asistente',      'descripcion' => 'Operador de la estación de chequeo'],
+            ['id' => 5, 'nombre' => 'Técnico',        'descripcion' => 'Soporte técnico con funciones operativas'],
         ]);
 
         // ─── Permisos ─────────────────────────────────────
@@ -67,6 +68,13 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Técnico: mismos permisos que Asistente
+        foreach ([9, 12, 13, 11, 14, 7] as $permisoId) {
+            DB::table('rol_permiso')->insertOrIgnore([
+                'rol_id' => 5, 'permiso_id' => $permisoId,
+            ]);
+        }
+
         // ─── Usuario admin (solo si no existe) ────────────
         if (!DB::table('users')->where('email', 'admin@universidad.edu')->exists()) {
             $passwordAdmin = bin2hex(random_bytes(16));
@@ -79,7 +87,6 @@ class DatabaseSeeder extends Seeder
                 'email'              => 'admin@universidad.edu',
                 'rol_id'             => 1,
                 'estatus'            => 'activo',
-                'codigo_qr_estatico' => Str::uuid()->toString(),
             ]);
 
             $this->command->warn('Superadmin creado: admin@universidad.edu');

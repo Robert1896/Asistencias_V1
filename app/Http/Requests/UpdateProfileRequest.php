@@ -28,7 +28,7 @@ class UpdateProfileRequest extends FormRequest
             'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
             'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$userId}",
             'email'    => "required|email|max:120|unique:users,email,{$userId}",
-            'password' => 'nullable|confirmed|' . \App\Support\PasswordPolicy::ruleString(),
+            'password' => array_merge(['nullable', 'confirmed'], \App\Support\PasswordPolicy::rules()),
         ];
     }
 

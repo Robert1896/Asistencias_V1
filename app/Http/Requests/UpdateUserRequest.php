@@ -39,7 +39,7 @@ class UpdateUserRequest extends FormRequest
             'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$usuarioId}",
             'email'    => "required|email|max:120|unique:users,email,{$usuarioId}",
             'rol_id'   => ['required', 'integer', 'exists:roles,id', Rule::in($this->rolesAsignables())],
-            'password' => 'nullable|' . \App\Support\PasswordPolicy::ruleString(),
+            'password' => array_merge(['nullable', 'confirmed'], \App\Support\PasswordPolicy::rules()),
         ];
 
         // Nadie puede cambiar su propio rol (evita autopromoción, CWE-269)
@@ -74,6 +74,7 @@ class UpdateUserRequest extends FormRequest
             'apellido.regex'        => 'El apellido solo puede contener letras y espacios.',
             'password.min'          => 'La contraseña debe tener al menos 16 caracteres.',
             'password.regex'        => 'La contraseña debe incluir al menos una mayúscula, una minúscula y un número.',
+            'password.confirmed'    => 'Las contraseñas no coinciden.',
             'email.unique'          => 'Este correo ya está registrado.',
             'email.email'           => 'El correo no es válido.',
         ];

@@ -191,12 +191,13 @@ class AuthHardeningTest extends TestCase
         $objetivo->forceFill(['remember_token' => 'token-viejo'])->save();
 
         $this->actingAs($admin)->put(route('admin.usuarios.update', $objetivo), [
-            'nombre'    => $objetivo->nombre,
-            'apellido'  => $objetivo->apellido,
-            'cedula'    => '19876544',
-            'email'     => $objetivo->email,
-            'rol_id'    => $objetivo->rol_id,
-            'password'  => 'ClaveNuevaSegura2026!x',
+            'nombre'                => $objetivo->nombre,
+            'apellido'              => $objetivo->apellido,
+            'cedula'                => '19876544',
+            'email'                 => $objetivo->email,
+            'rol_id'                => $objetivo->rol_id,
+            'password'              => 'ClaveNuevaSegura2026!x',
+            'password_confirmation' => 'ClaveNuevaSegura2026!x',
         ])->assertRedirect(route('admin.usuarios'));
 
         $objetivo->refresh();

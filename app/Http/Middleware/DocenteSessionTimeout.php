@@ -16,7 +16,7 @@ class DocenteSessionTimeout
         if (Auth::check()) {
             $rolId = (int) Auth::user()->rol_id;
 
-            if (in_array($rolId, [2, 3, 4], true)) {
+            if (in_array($rolId, [2, 3, 4, 5], true)) {
                 $lastActivity = session('last_activity');
 
                 if ($lastActivity && (now()->timestamp - $lastActivity) > (self::TIMEOUT_MINUTES * 60)) {

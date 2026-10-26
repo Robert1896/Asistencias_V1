@@ -73,6 +73,7 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
         Route::get('estacion', [EstacionController::class, 'index'])->name('estacion.index')->middleware('estacion.central');
         Route::post('estacion/procesar', [EstacionController::class, 'procesarLectura'])->name('estacion.procesar')->middleware(['estacion.central', 'throttle:60,1']);
         Route::post('estacion/adhoc', [EstacionController::class, 'procesarAdHoc'])->name('estacion.adhoc')->middleware(['estacion.central', 'throttle:60,1']);
+        Route::post('estacion/reasignar-salon', [EstacionController::class, 'reasignarSalon'])->name('estacion.reasignar-salon')->middleware(['estacion.central', 'throttle:30,1']);
     });
     Route::get('estacion/manual', [EstacionController::class, 'registroManual'])->name('estacion.manual')->middleware(['can:asistencias_registrar', 'estacion.central']);
     Route::post('estacion/manual', [EstacionController::class, 'registrarManual'])->name('estacion.registrar')->middleware(['can:asistencias_registrar', 'estacion.central', 'throttle:30,1']);

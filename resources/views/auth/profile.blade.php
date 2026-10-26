@@ -86,6 +86,9 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
+                        @error('password')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                         <div class="mt-1" id="password-strength" style="display:none;">
                             <div class="progress" style="height:5px;">
                                 <div id="strength-bar" class="progress-bar" style="width:0%"></div>
@@ -95,9 +98,10 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Confirmar Contraseña</label>
+                        <label class="form-label">Confirmar Contraseña <small class="text-muted">(obligatorio si escribes nueva contraseña)</small></label>
                         <div class="pw-field-wrap">
-                            <input type="password" name="password_confirmation" id="password-confirm-input" class="form-control"
+                            <input type="password" name="password_confirmation" id="password-confirm-input" class="form-control @error('password_confirmation') is-invalid @enderror"
+                                   minlength="16"
                                    placeholder="Repite la contraseña">
                             <button class="pw-toggle-btn" type="button"
                                     data-pw-toggle="password-confirm-input"
@@ -105,6 +109,9 @@
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
+                        @error('password_confirmation')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     @if ($user->rol_id !== 3)

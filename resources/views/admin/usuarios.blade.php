@@ -78,7 +78,7 @@
                             </select>
                             <div style="height:22px;"></div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label class="form-label small" for="new-user-password">Contraseña *</label>
                             <div class="input-group input-group-sm pw-field-wrap">
                                 <input type="password" name="password" id="new-user-password"
@@ -97,6 +97,19 @@
                                     <div id="pw-bar" class="progress-bar" role="progressbar" style="width:0%"></div>
                                 </div>
                                 <small id="pw-label" class="text-muted" style="font-size:0.65rem;"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small" for="new-user-password-confirm">Confirmar contraseña *</label>
+                            <div class="input-group input-group-sm pw-field-wrap">
+                                <input type="password" name="password_confirmation" id="new-user-password-confirm"
+                                       class="form-control"
+                                       placeholder="Repetir contraseña"
+                                       required minlength="16"
+                                       autocomplete="new-password">
+                                <button class="pw-toggle-btn" type="button" id="toggle-pw-new-confirm" title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -286,6 +299,18 @@
                                     </div>
                                 </div>
                                 <div class="col-md-2">
+                                    <label class="form-label small text-muted" for="editPasswordConfirm{{ $u->id }}">Confirmar contraseña</label>
+                                    <div class="pw-field-wrap">
+                                        <input type="password" name="password_confirmation" id="editPasswordConfirm{{ $u->id }}" class="form-control form-control-sm"
+                                               placeholder="Repetir contraseña" minlength="16">
+                                        <button class="pw-toggle-btn" type="button"
+                                                data-pw-toggle="editPasswordConfirm{{ $u->id }}"
+                                                title="Mostrar contraseña" aria-label="Mostrar contraseña">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
                                     <button type="submit" class="btn btn-primary btn-sm w-100">Guardar</button>
                                 </div>
                             </form>
@@ -363,6 +388,25 @@
                 var isPassword = pwInput.type === 'password';
                 pwInput.type = isPassword ? 'text' : 'password';
                 toggleBtn.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        }
+
+        var toggleBtnConfirm = document.getElementById('toggle-pw-new-confirm');
+        var pwInputConfirm = document.getElementById('new-user-password-confirm');
+        if (toggleBtnConfirm && pwInputConfirm) {
+            pwInputConfirm.addEventListener('input', function() {
+                if (pwInputConfirm.value.length > 0) {
+                    toggleBtnConfirm.classList.add('visible');
+                } else {
+                    toggleBtnConfirm.classList.remove('visible');
+                    pwInputConfirm.type = 'password';
+                    toggleBtnConfirm.querySelector('i').className = 'bi bi-eye';
+                }
+            });
+            toggleBtnConfirm.addEventListener('click', function() {
+                var isPassword = pwInputConfirm.type === 'password';
+                pwInputConfirm.type = isPassword ? 'text' : 'password';
+                toggleBtnConfirm.querySelector('i').className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
             });
         }
 

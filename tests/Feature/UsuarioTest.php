@@ -64,6 +64,7 @@ class UsuarioTest extends TestCase
             'cedula' => '12345678',
             'email' => 'juan@test.com',
             'password' => 'UsuarioSeguro2026!X',
+            'password_confirmation' => 'UsuarioSeguro2026!X',
             'rol_id' => 3,
         ]);
 
