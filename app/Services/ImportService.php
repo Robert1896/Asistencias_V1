@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Support\PasswordPolicy;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ImportService
 {
@@ -141,7 +140,7 @@ class ImportService
      *
      * Valida campos requeridos (nombre, apellido, email), cédula única,
      * formato de contraseña y existencia de rol. Genera contraseña aleatoria
-     * si no se proporciona. Crea registros con estatus activo y QR estático.
+     * si no se proporciona. Crea registros con estatus activo.
      *
      * @param UploadedFile $file Archivo con los datos de usuarios.
      * @return array{created: int, errors: array<int,string>}
@@ -172,7 +171,10 @@ class ImportService
         $creados = 0;
         $errores = [];
 
-        foreach ($rows as $i => $row) {
+        DB::beginTransaction();
+
+        try {
+            foreach ($rows as $i => $row) {
             $nombre    = trim($row[$nombreIdx] ?? '');
             $apellido  = trim($row[$apellidoIdx] ?? '');
             $email     = trim($row[$emailIdx] ?? '');
@@ -228,26 +230,31 @@ class ImportService
                 continue;
             }
 
-            User::create([
-                'nombre'             => strip_tags($nombre),
-                'apellido'           => strip_tags($apellido),
-                'email'              => $email,
-                'cedula'             => $cedula,
-                'rol_id'             => $rol->id,
-                'password'           => $finalPassword,
-                'estatus'            => 'activo',
-                'codigo_qr_estatico' => ($rol->id == 3 && DB::getDriverName() === 'mysql') ? null : Str::uuid()->toString(),
+                User::create([
+                    'nombre'             => strip_tags($nombre),
+                    'apellido'           => strip_tags($apellido),
+                    'email'              => $email,
+                    'cedula'             => $cedula,
+                    'rol_id'             => $rol->id,
+                    'password'           => $finalPassword,
+                    'estatus'            => 'activo',
+                ]);
+
+                $creados++;
+            }
+
+            DB::commit();
+
+            ActivityLog::log('usuarios_importar', "Importó {$creados} usuarios desde archivo", 'usuarios', [
+                'creados' => $creados,
+                'errores' => count($errores),
             ]);
 
-            $creados++;
+            return ['created' => $creados, 'errors' => $errores];
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-        ActivityLog::log('usuarios_importar', "Importó {$creados} usuarios desde archivo", 'usuarios', [
-            'creados' => $creados,
-            'errores' => count($errores),
-        ]);
-
-        return ['created' => $creados, 'errors' => $errores];
     }
 
     /**
@@ -262,9 +269,12 @@ class ImportService
      */
     public function importarAsignaciones(UploadedFile $file): array
     {
-        $parsed = $this->parseFile($file);
-        $headers = $parsed['headers'];
-        $rows = $parsed['rows'];
+        DB::beginTransaction();
+
+        try {
+            $parsed = $this->parseFile($file);
+            $headers = $parsed['headers'];
+            $rows = $parsed['rows'];
 
         if (!$headers) {
             return ['created' => 0, 'errors' => ['El archivo no tiene encabezados válidos.']];
@@ -336,7 +346,6 @@ class ImportService
                     'password'           => $passwordGenerada,
                     'rol_id'             => $rolId,
                     'estatus'            => 'inactivo',
-                    'codigo_qr_estatico' => ($rolId == 3 && DB::getDriverName() === 'mysql') ? null : Str::uuid()->toString(),
                 ]);
 
                 unset($passwordGenerada);
@@ -495,18 +504,24 @@ class ImportService
             $errores[] = "Se crearon " . count($coordinacionesCreadas) . " coordinaciones nuevas: " . implode(', ', $coordinacionesCreadas) . ".";
         }
 
-        ActivityLog::log('salon_importar', "Importación de asignaciones: {$creados} creadas", 'usuarios', [
-            'creados' => $creados,
-            'errores' => count($errores),
-        ]);
+            DB::commit();
 
-        return [
-            'created'              => $creados,
-            'errors'               => $errores,
-            'usuarios_creados'     => $usuariosCreados,
-            'salones_creados'      => $salonesCreados,
-            'horarios_creados'     => $horariosCreados,
-            'coordinaciones_creadas' => $coordinacionesCreadas,
-        ];
+            ActivityLog::log('salon_importar', "Importación de asignaciones: {$creados} creadas", 'usuarios', [
+                'creados' => $creados,
+                'errores' => count($errores),
+            ]);
+
+            return [
+                'created'              => $creados,
+                'errors'               => $errores,
+                'usuarios_creados'     => $usuariosCreados,
+                'salones_creados'      => $salonesCreados,
+                'horarios_creados'     => $horariosCreados,
+                'coordinaciones_creadas' => $coordinacionesCreadas,
+            ];
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }
