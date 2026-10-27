@@ -113,6 +113,9 @@
                 <main id="auth-content">
                     @yield('content')
                 </main>
+                <div class="text-center mt-3 text-muted small">
+                    &copy; {{ date('Y') }} UPTAG - Todos los derechos reservados.
+                </div>
             </div>
         </div>
     </div>
