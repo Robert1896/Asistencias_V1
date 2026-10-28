@@ -23,14 +23,25 @@ class StoreUserRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
-            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
-            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
+        $rules = [
+            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'-]+$/u'],
+            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'-]+$/u'],
             'cedula'   => 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
             'email'    => 'required|email|max:120|unique:users,email',
             'password' => array_merge(['required', 'confirmed'], \App\Support\PasswordPolicy::rules()),
-            'rol_id'   => ['required', 'integer', Rule::in($this->rolesAsignables())],
+            'rol_id'   => ['required', 'integer'],
         ];
+
+        try {
+            $rolesAsignables = $this->rolesAsignables();
+            if (!empty($rolesAsignables)) {
+                $rules['rol_id'] = ['required', 'integer', Rule::in($rolesAsignables)];
+            }
+        } catch (\Throwable $e) {
+            $rules['rol_id'] = ['required', 'integer'];
+        }
+
+        return $rules;
     }
 
     /**
