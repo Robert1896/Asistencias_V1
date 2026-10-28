@@ -433,15 +433,15 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
         $hoy      = today()->toDateString();
         $horaAhora = now()->format('H:i:s');
 
-        if ($empleado->rol_id === 3) {
+        if ((int)$empleado->rol_id === 3) {
             return $this->registrarManualDocente($operador, $empleado, $tipo, $hoy, $horaAhora, $ip);
         }
 
-        if ($empleado->rol_id === 2) {
+        if (in_array((int)$empleado->rol_id, [2, 4, 5], true)) {
             return $this->registrarManualAdministrativo($operador, $empleado, $tipo, $hoy, $horaAhora, $ip);
         }
 
-        return $this->resultado(false, 'Solo se puede registrar asistencia para Administrativos y Docentes.', 'error');
+        return $this->resultado(false, 'Solo se puede registrar asistencia para Administrativos, Asistentes, Técnicos y Docentes.', 'error');
     }
 
     private function registrarManualDocente(User $operador, User $empleado, string $tipo, string $hoy, string $horaAhora, ?string $ip = null): array
