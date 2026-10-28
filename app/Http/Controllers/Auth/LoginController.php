@@ -94,11 +94,15 @@ class LoginController extends Controller
         $request->session()->regenerate();
         $request->session()->put('sesion_iniciada_en', now()->timestamp);
 
-        ActivityLog::log('login', "Inicio de sesión exitoso: " . ($user->cedula ?? $user->email), 'auth', [
-            'login'   => $login,
-            'user_id' => $user->id,
-            'ip'      => $request->ip(),
-        ]);
+        try {
+            ActivityLog::log('login', "Inicio de sesión exitoso: " . ($user->cedula ?? $user->email), 'auth', [
+                'email'     => $user->email,
+                'user_id'   => $user->id,
+                'ip'        => $request->ip(),
+                'user_agent'=> $request->userAgent(),
+            ]);
+        } catch (\Throwable $e) {
+        }
 
         return redirect()->intended(route('dashboard'));
     }
