@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\DeviceDetector;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class ActivityLog extends Model
 {
@@ -34,17 +35,26 @@ class ActivityLog extends Model
         return $this->belongsTo(User::class);
     }
 
-    public static function log(string $accion, string $descripcion, string $tipo = 'sistema', ?array $datos = null, ?int $userId = null): static
+    public static function log(string $accion, string $descripcion, string $tipo = 'sistema', ?array $datos = null, ?int $userId = null): ?static
     {
-        $userId = $userId ?? auth()->id();
+        try {
+            $userId = $userId ?? auth()->id();
 
-        return static::create([
-            'user_id'     => $userId,
-            'accion'      => $accion,
-            'descripcion' => $descripcion,
-            'tipo'        => $tipo,
-            'datos'       => $datos,
-            'dispositivo' => DeviceDetector::detectar(),
-        ]);
+            $data = [
+                'user_id'     => $userId,
+                'accion'      => $accion,
+                'descripcion' => $descripcion,
+                'tipo'        => $tipo,
+                'datos'       => $datos,
+            ];
+
+            if (Schema::hasColumn('activity_log', 'dispositivo')) {
+                $data['dispositivo'] = DeviceDetector::detectar();
+            }
+
+            return static::create($data);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }
