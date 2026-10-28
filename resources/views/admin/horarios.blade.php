@@ -134,15 +134,15 @@
                         <tr>
                             <td>{{ $d->nombre_completo }}</td>
                             <td>{{ $d->email }}</td>
-                            <td><span class="badge bg-info">{{ $d->horariosDocente->count() }} bloques</span></td>
+                            <td><span class="badge bg-info">{{ isset($d->horariosDocente) ? $d->horariosDocente->count() : 0 }} bloques</span></td>
                             <td>
-                                @if ($d->horariosDocente->isEmpty())
+                                @if (!isset($d->horariosDocente) || $d->horariosDocente->isEmpty())
                                     <span class="text-muted small">Sin horarios asignados</span>
                                 @else
                                     <div class="d-flex flex-wrap gap-1">
-                                        @foreach ($d->horariosDocente->sortBy(fn($h)=>$h->dia_semana.(string)$h->hora_inicio) as $hd)
+                                        @foreach ($d->horariosDocente->sortBy(fn($h)=>($h->dia_semana ?? 0).(string)($h->hora_inicio ?? '')) as $hd)
                                             <span class="badge bg-light text-dark border">
-                                                {{ \App\Models\Horario::DIAS[$hd->dia_semana] ?? $hd->dia_semana }} {{ substr($hd->hora_inicio,0,5) }}-{{ substr($hd->hora_fin,0,5) }}
+                                                {{ isset($hd->dia_semana) && isset(\App\Models\Horario::DIAS[$hd->dia_semana]) ? \App\Models\Horario::DIAS[$hd->dia_semana] : ($hd->dia_semana ?? '') }} {{ isset($hd->hora_inicio) ? substr($hd->hora_inicio,0,5) : '' }}-{{ isset($hd->hora_fin) ? substr($hd->hora_fin,0,5) : '' }}
                                                 @if(isset($hd->salon) && $hd->salon) - {{ $hd->salon->nombre }} @endif
                                             </span>
                                         @endforeach
