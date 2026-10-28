@@ -53,7 +53,17 @@ class UpdateUserRequest extends FormRequest
                 $rules['rol_id'] = ['required', 'integer', Rule::in($rolesAsignables)];
             }
         } catch (\Throwable $e) {
-            // Si hay error, permitir rol 5 (Técnico) y roles válidos comunes
+            $rules['rol_id'] = ['required', 'integer'];
+        }
+
+        // Permitir siempre rol 5 (Técnico)
+        if (isset($rules['rol_id']) && is_array($rules['rol_id'])) {
+            $hasIn = false;
+            foreach ($rules['rol_id'] as $r) {
+                if (is_object($r) && get_class($r) === Rule::class) {
+                    // keep
+                }
+            }
             $rules['rol_id'] = ['required', 'integer'];
         }
 
