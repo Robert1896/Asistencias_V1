@@ -20,7 +20,7 @@ class DashboardController extends Controller
             return redirect()->route('empleado.dashboard');
         }
 
-        if ($user->rol && $user->rol->nombre === 'Asistente') {
+        if ($user->rol && ($user->rol->nombre === 'Asistente' || $user->rol->nombre === 'Técnico' || (int)$user->rol_id === 5)) {
             return $this->asistente($user);
         }
 
@@ -94,9 +94,39 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $ultimos7Dias = collect(range(6, 0))->map(fn($i) => now()->subDays($i)->toDateString());
+        $asistenciasPorDia = Cache::remember('dashboard_chart_asistente_' . today()->toDateString(), 300, function () use ($ultimos7Dias) {
+            return Asistencia::whereBetween('fecha', [$ultimos7Dias->first(), $ultimos7Dias->last()])
+                ->selectRaw("
+                    fecha,
+                    SUM(CASE WHEN estado = 'Presente' THEN 1 ELSE 0 END) AS presentes,
+                    SUM(CASE WHEN estado = 'Tarde' THEN 1 ELSE 0 END) AS tardes,
+                    SUM(CASE WHEN estado = 'Inasistente' THEN 1 ELSE 0 END) AS inasistentes,
+                    SUM(CASE WHEN estado = 'Apoyo Sabado' THEN 1 ELSE 0 END) AS apoyos
+                ")
+                ->groupBy('fecha')
+                ->get()
+                ->keyBy('fecha');
+        });
+
+        $chartLabels = $ultimos7Dias->map(fn($f) => Carbon::parse($f)->translatedFormat('d M'))->values();
+        $chartPresentes = $ultimos7Dias->map(fn($f) => $asistenciasPorDia[$f]->presentes ?? 0)->values();
+        $chartTardes = $ultimos7Dias->map(fn($f) => $asistenciasPorDia[$f]->tardes ?? 0)->values();
+        $chartInasistentes = $ultimos7Dias->map(fn($f) => $asistenciasPorDia[$f]->inasistentes ?? 0)->values();
+
+        $totalMes = Cache::remember('dashboard_month_asistente_' . now()->month, 300, function () {
+            return Asistencia::whereMonth('fecha', now()->month)
+                ->selectRaw("
+                    SUM(CASE WHEN estado = 'Presente' THEN 1 ELSE 0 END) AS presentes,
+                    SUM(CASE WHEN estado = 'Tarde' THEN 1 ELSE 0 END) AS tardes,
+                    SUM(CASE WHEN estado = 'Inasistente' THEN 1 ELSE 0 END) AS inasistentes,
+                    SUM(CASE WHEN estado = 'Apoyo Sabado' THEN 1 ELSE 0 END) AS apoyos
+                ")->first();
+        });
+
         return view('dashboard.asistente', compact(
             'user', 'asistenciasHoy', 'tardesHoy', 'inasistentesHoy', 'presentesHoy',
-            'ultimosRegistros'
+            'ultimosRegistros', 'chartLabels', 'chartPresentes', 'chartTardes', 'chartInasistentes', 'totalMes'
         ));
     }
 }

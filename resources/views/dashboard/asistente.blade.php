@@ -106,6 +106,49 @@
     </div>
 </div>
 
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-graph-up me-1"></i>Asistencias — Últimos 7 días</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartAsistenciaSemanal" height="100"></canvas>
+                <noscript>
+                    <table class="table table-sm small">
+                        <thead><tr><th>Día</th><th>Presentes</th><th>Tardes</th><th>Inasistentes</th></tr></thead>
+                        <tbody>
+                            @if(isset($chartLabels))
+                            @foreach ($chartLabels as $i => $label)
+                            <tr><td>{{ $label }}</td><td>{{ $chartPresentes[$i] ?? 0 }}</td><td>{{ $chartTardes[$i] ?? 0 }}</td><td>{{ $chartInasistentes[$i] ?? 0 }}</td></tr>
+                            @endforeach
+                            @endif
+                        </tbody>
+                    </table>
+                </noscript>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-pie-chart me-1"></i>Resumen del Mes</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartResumenMes" height="200"></canvas>
+                <noscript>
+                    <p class="small text-muted mt-2">
+                        Presentes: {{ $totalMes->presentes ?? 0 }} |
+                        Tardes: {{ $totalMes->tardes ?? 0 }} |
+                        Inasistentes: {{ $totalMes->inasistentes ?? 0 }} |
+                        Apoyo Sáb.: {{ $totalMes->apoyos ?? 0 }}
+                    </p>
+                </noscript>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white">
         <h6 class="mb-0"><i class="bi bi-clock-history me-1"></i>Últimos registros de hoy</h6>
@@ -149,3 +192,57 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC" crossorigin="anonymous"></script>
+<script nonce="{{ $cspNonce ?? '' }}">
+    @if(isset($chartLabels))
+    const labels = {!! json_encode($chartLabels) !!};
+    const presentes = {!! json_encode($chartPresentes) !!};
+    const tardes = {!! json_encode($chartTardes) !!};
+    const inasistentes = {!! json_encode($chartInasistentes) !!};
+    const mesData = {!! json_encode([
+        'presentes' => $totalMes->presentes ?? 0,
+        'tardes' => $totalMes->tardes ?? 0,
+        'inasistentes' => $totalMes->inasistentes ?? 0,
+        'apoyos' => $totalMes->apoyos ?? 0,
+    ]) !!};
+
+    new Chart(document.getElementById('chartAsistenciaSemanal'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Presentes', data: presentes, backgroundColor: '#198754' },
+                { label: 'Tardes', data: tardes, backgroundColor: '#ffc107' },
+                { label: 'Inasistentes', data: inasistentes, backgroundColor: '#dc3545' },
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('chartResumenMes'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Presentes', 'Tardes', 'Inasistentes', 'Apoyo Sáb.'],
+            datasets: [{
+                data: [mesData.presentes, mesData.tardes, mesData.inasistentes, mesData.apoyos],
+                backgroundColor: ['#198754', '#ffc107', '#dc3545', '#0dcaf0'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+            }
+        }
+    });
+    @endif
+</script>
+@endpush
