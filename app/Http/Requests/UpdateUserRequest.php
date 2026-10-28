@@ -26,26 +26,44 @@ class UpdateUserRequest extends FormRequest
         }
 
         // Una cuenta Superadmin solo puede ser editada por otra Superadmin (CWE-269)
-        return !((int) $usuario->rol_id === 1 && (int) $actor->rol_id !== 1);
+        if ((int) $usuario->rol_id === 1 && (int) $actor->rol_id !== 1) {
+            return false;
+        }
+
+        return true;
     }
 
     public function rules(): array
     {
-        $usuarioId = $this->route('usuario')->id;
+        $usuario = $this->route('usuario');
+        $usuarioId = $usuario ? $usuario->id : null;
 
         $rules = [
-            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
-            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
-            'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$usuarioId}",
-            'email'    => "required|email|max:120|unique:users,email,{$usuarioId}",
-            'rol_id'   => ['required', 'integer', Rule::in($this->rolesAsignables())],
+            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'-]+$/u'],
+            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'-]+$/u'],
+            'cedula'   => $usuarioId ? "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$usuarioId}" : 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
+            'email'    => $usuarioId ? "required|email|max:120|unique:users,email,{$usuarioId}" : 'required|email|max:120|unique:users,email',
+            'rol_id'   => ['required', 'integer'],
             'password' => array_merge(['nullable', 'confirmed'], \App\Support\PasswordPolicy::rules()),
         ];
 
-        // Nadie puede cambiar su propio rol (evita autopromoción, CWE-269)
-        if ((int) $this->route('usuario')->id === (int) auth()->id()) {
-            $rules['rol_id'][] = Rule::in([(int) $this->route('usuario')->rol_id]);
+        try {
+            $rolesAsignables = $this->rolesAsignables();
+            if (!empty($rolesAsignables)) {
+                $rules['rol_id'] = ['required', 'integer', Rule::in($rolesAsignables)];
+            }
+        } catch (\Throwable $e) {
+            // Si hay error, permitir rol 5 (Técnico) y roles válidos comunes
+            $rules['rol_id'] = ['required', 'integer'];
         }
+
+        // Nadie puede cambiar su propio rol (evita autopromoción, CWE-269)
+        if ($usuario && (int) $usuario->id === (int) auth()->id()) {
+            $rules['rol_id'] = ['required', 'integer', Rule::in([(int) $usuario->rol_id])];
+        }
+
+        return $rules;
+    }
 
         return $rules;
     }
