@@ -175,7 +175,10 @@ class LoginController extends Controller
         if (!$user || !$user->codigoDosFactoresValido($request->input('codigo'))) {
             RateLimiter::hit($throttleKey, 900);
 
+            try {
             ActivityLog::log('login_2fa_fallido', "Código 2FA inválido para: {$pendingId}", 'auth', ['user_id' => $pendingId]);
+        } catch (\Throwable $e) {
+        }
 
             return back()->withErrors(['codigo' => 'El código no es válido o ha expirado.']);
         }
