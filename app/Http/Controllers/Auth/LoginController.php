@@ -210,17 +210,26 @@ class LoginController extends Controller
                 $dispositivo = 'desconocido';
                 try {
                     $ua = strtolower($request->userAgent() ?? '');
-                    if (str_contains($ua, 'ipad') || str_contains($ua, 'tablet') || str_contains($ua, 'kindle')) {
+                    if (str_contains($ua, 'ipad') || str_contains($ua, 'tablet') || str_contains($ua, 'kindle') || str_contains($ua, 'silk')) {
                         $dispositivo = 'tablet';
-                    } elseif (str_contains($ua, 'mobile') || str_contains($ua, 'iphone') || str_contains($ua, 'ipod') || (str_contains($ua, 'android') && !str_contains($ua, 'tablet')) || str_contains($ua, 'windows phone')) {
+                    } elseif (str_contains($ua, 'mobile') || str_contains($ua, 'iphone') || str_contains($ua, 'ipod') || (str_contains($ua, 'android') && !str_contains($ua, 'tablet')) || str_contains($ua, 'windows phone') || str_contains($ua, 'opera mini')) {
                         $dispositivo = 'movil';
-                    } elseif (str_contains($ua, 'windows') || str_contains($ua, 'macintosh') || str_contains($ua, 'linux') || str_contains($ua, 'x11')) {
+                    } elseif (str_contains($ua, 'windows') || str_contains($ua, 'macintosh') || str_contains($ua, 'linux') || str_contains($ua, 'x11') || str_contains($ua, 'cros')) {
                         $dispositivo = 'pc';
+                    } else {
+                        // Si hay user agent pero no coincide, intentar detectar por patrones comunes
+                        if (str_contains($ua, 'mozilla') || str_contains($ua, 'chrome') || str_contains($ua, 'safari') || str_contains($ua, 'edge') || str_contains($ua, 'firefox')) {
+                            if (str_contains($ua, 'mobile')) {
+                                $dispositivo = 'movil';
+                            } else {
+                                $dispositivo = 'pc';
+                            }
+                        }
                     }
                 } catch (\Throwable $ex) {
                 }
 
-                $data = [
+                $insert = [
                     'user_id'     => $userId,
                     'accion'      => 'logout',
                     'descripcion' => "Cierre de sesión: {$user->email}",
@@ -229,12 +238,10 @@ class LoginController extends Controller
                     'created_at'  => now(),
                     'updated_at'  => now(),
                 ];
-
                 if (\Illuminate\Support\Facades\Schema::hasColumn('activity_log', 'dispositivo')) {
-                    $data['dispositivo'] = $dispositivo;
+                    $insert['dispositivo'] = $dispositivo;
                 }
-
-                \Illuminate\Support\Facades\DB::table('activity_log')->insert($data);
+                \Illuminate\Support\Facades\DB::table('activity_log')->insert($insert);
             } catch (\Throwable $e) {
             }
         }
