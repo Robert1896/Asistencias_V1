@@ -199,16 +199,17 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $user = Auth::user();
+        $userId = $user?->id;
+        $userEmail = $user?->email;
+
+        ActivityLog::log('logout', $user ? "Cierre de sesión: {$user->nombre_completo}" : 'Cierre de sesión', 'auth', [
+            'email'   => $userEmail,
+            'user_id' => $userId,
+        ], $userId);
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        if ($user) {
-            ActivityLog::log('logout', "Cierre de sesión: {$user->email}", 'auth', [
-                'email'   => $user->email,
-                'user_id' => $user->id,
-            ]);
-        }
 
         return redirect('/login');
     }

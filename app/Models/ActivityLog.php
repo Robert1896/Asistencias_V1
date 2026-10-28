@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DeviceDetector;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,6 +18,7 @@ class ActivityLog extends Model
         'descripcion',
         'tipo',
         'datos',
+        'dispositivo',
     ];
 
     protected function casts(): array
@@ -32,14 +34,17 @@ class ActivityLog extends Model
         return $this->belongsTo(User::class);
     }
 
-    public static function log(string $accion, string $descripcion, string $tipo = 'sistema', ?array $datos = null): static
+    public static function log(string $accion, string $descripcion, string $tipo = 'sistema', ?array $datos = null, ?int $userId = null): static
     {
+        $userId = $userId ?? auth()->id();
+
         return static::create([
-            'user_id'     => auth()->id(),
+            'user_id'     => $userId,
             'accion'      => $accion,
             'descripcion' => $descripcion,
             'tipo'        => $tipo,
             'datos'       => $datos,
+            'dispositivo' => DeviceDetector::detectar(),
         ]);
     }
 }

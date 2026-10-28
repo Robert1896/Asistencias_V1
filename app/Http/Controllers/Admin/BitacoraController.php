@@ -12,8 +12,10 @@ class BitacoraController extends Controller
     public function index(Request $request): View
     {
         $request->validate([
-            'tipo'  => 'nullable|string|max:50',
-            'fecha' => 'nullable|date',
+            'tipo'        => 'nullable|string|max:50',
+            'fecha'       => 'nullable|date',
+            'dispositivo' => 'nullable|string|in:pc,movil,tablet,desconocido',
+            'usuario'     => 'nullable|string|max:100',
         ]);
 
         $query = ActivityLog::with('user')->orderByDesc('created_at');
@@ -26,7 +28,18 @@ class BitacoraController extends Controller
             $query->whereDate('created_at', $fecha);
         }
 
-        $actividades = $query->paginate(15)->withQueryString();
+        if ($dispositivo = $request->input('dispositivo')) {
+            $query->where('dispositivo', $dispositivo);
+        }
+
+        if ($usuario = $request->input('usuario')) {
+            $query->whereHas('user', function ($q) use ($usuario) {
+                $q->where('nombre_completo', 'like', '%' . $usuario . '%')
+                    ->orWhere('email', 'like', '%' . $usuario . '%');
+            });
+        }
+
+        $actividades = $query->paginate(20)->withQueryString();
 
         return view('admin.bitacora', compact('actividades'));
     }
