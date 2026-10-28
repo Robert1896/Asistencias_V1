@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateDocenteHorarioRequest;
 use App\Models\ActivityLog;
+use App\Models\CargaAcademicaDocente;
 use App\Models\Coordinacion;
 use App\Models\DocenteHorarioPivot;
 use App\Models\Horario;
@@ -57,16 +58,57 @@ class DocenteHorarioController extends Controller
 
         $syncData = [];
         $errores = [];
+
+        // Sincronizar cargas académicas con la importación (crear/actualizar por materia)
+        $bloquesPorMateria = [];
+        foreach (($data['bloques'] ?? []) as $bloque) {
+            $tipo = $bloque['tipo'] ?? 'carga_academica';
+            if ($tipo === 'carga_academica') {
+                $cargaId = !empty($bloque['carga_academica_id']) ? (int) $bloque['carga_academica_id'] : null;
+                if ($cargaId) {
+                    $carga = CargaAcademicaDocente::find($cargaId);
+                    if ($carga && $carga->usuario_id == $user->id) {
+                        $key = $user->id . '|' . $carga->materia;
+                        $bloquesPorMateria[$key] = ($bloquesPorMateria[$key] ?? 0) + 1;
+                    }
+                }
+            }
+        }
+
+        $cargaMap = [];
+        foreach ($bloquesPorMateria as $key => $numBloques) {
+            [$userId, $materia] = explode('|', $key, 2);
+            $carga = CargaAcademicaDocente::where('usuario_id', $userId)
+                ->where('materia', $materia)
+                ->first();
+            if ($carga) {
+                $carga->update(['horas_semanales' => $numBloques]);
+                $cargaMap[$key] = $carga->id;
+            }
+        }
+
         foreach (($data['bloques'] ?? []) as $key => $bloque) {
             $horarioId = $bloque['horario_id'] ?? null;
-            if (!$horarioId) continue;
+            if (!$horarioId) {
+                continue;
+            }
 
-            $tipo      = $bloque['tipo'] ?? 'carga_academica';
-            $coordId   = !empty($bloque['coord']) ? (int) $bloque['coord'] : null;
-            $salonId   = !empty($bloque['salon_id']) ? (int) $bloque['salon_id'] : null;
-            $cargaId   = !empty($bloque['carga_academica_id']) ? (int) $bloque['carga_academica_id'] : null;
-            $seccion   = !empty($bloque['seccion']) ? $bloque['seccion'] : null;
-            $pivotKey  = $horarioId . '-' . $tipo . '-' . ($seccion ?? '');
+            $tipo    = $bloque['tipo'] ?? 'carga_academica';
+            $coordId = !empty($bloque['coord']) ? (int) $bloque['coord'] : null;
+            $salonId = !empty($bloque['salon_id']) ? (int) $bloque['salon_id'] : null;
+            $cargaId = !empty($bloque['carga_academica_id']) ? (int) $bloque['carga_academica_id'] : null;
+            $seccion = !empty($bloque['seccion']) ? $bloque['seccion'] : null;
+            $pivotKey = $horarioId . '-' . $tipo . '-' . ($seccion ?? '');
+
+            if ($tipo === 'carga_academica' && $cargaId) {
+                $carga = CargaAcademicaDocente::find($cargaId);
+                if ($carga && $carga->usuario_id == $user->id) {
+                    $mapKey = $user->id . '|' . $carga->materia;
+                    if (isset($cargaMap[$mapKey])) {
+                        $cargaId = $cargaMap[$mapKey];
+                    }
+                }
+            }
 
             if ($salonId) {
                 $colision = DocenteHorarioPivot::where('salon_id', $salonId)
@@ -75,11 +117,11 @@ class DocenteHorarioController extends Controller
                     ->exists();
 
                 if ($colision) {
-                    $horario  = Horario::find($horarioId);
-                    $dia      = Horario::DIAS[$horario->dia_semana] ?? '?';
-                    $inicio   = substr($horario->hora_inicio, 0, 5);
-                    $fin      = substr($horario->hora_fin, 0, 5);
-                    $salon    = Salon::find($salonId);
+                    $horario = Horario::find($horarioId);
+                    $dia     = $horario ? (Horario::DIAS[$horario->dia_semana] ?? '?') : '?';
+                    $inicio  = $horario ? substr($horario->hora_inicio, 0, 5) : '';
+                    $fin     = $horario ? substr($horario->hora_fin, 0, 5) : '';
+                    $salon   = Salon::find($salonId);
                     $errores[] = "El salón «{$salon->nombre}» ya está ocupado el {$dia} de {$inicio} a {$fin} por otro profesor.";
                 }
             }

@@ -88,6 +88,12 @@
         .pw-field-wrap { position: relative; }
         .pw-field-wrap input[type="password"],
         .pw-field-wrap input[type="text"] { padding-right: 2.5rem; }
+        .auth-footer {
+            color: var(--text-secondary);
+        }
+        [data-theme="dark"] .auth-footer {
+            color: var(--text-secondary) !important;
+        }
     </style>
 </head>
 <body class="d-flex align-items-center min-vh-100">
@@ -113,8 +119,8 @@
                 <main id="auth-content">
                     @yield('content')
                 </main>
-                <div class="text-center mt-3 text-muted small">
-                    &copy; {{ date('Y') }} UPTAG - Todos los derechos reservados.
+                <div class="text-center mt-3 small auth-footer">
+                    &copy; {{ date('Y') }} {{ config('app.domain') ?: 'UPTAG' }} - Todos los derechos reservados.
                 </div>
             </div>
         </div>

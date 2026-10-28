@@ -51,9 +51,7 @@
             <button type="submit" class="btn btn-primary w-100 py-2">Ingresar</button>
         </form>
 
-        <div class="text-center mt-3 text-muted small">
-            &copy; {{ date('Y') }} UPTAG - Todos los derechos reservados.
-        </div>
+
     </div>
 </div>
 @endsection

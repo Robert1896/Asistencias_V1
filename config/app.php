@@ -99,6 +99,16 @@ return [
 
     'key' => env('APP_KEY'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Application Domain
+    |--------------------------------------------------------------------------
+    |
+    | Dominio institucional para mostrar en el pie de página (login, etc.)
+    |
+    */
+    'domain' => env('APP_DOMAIN'),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', (string) env('APP_PREVIOUS_KEYS', ''))

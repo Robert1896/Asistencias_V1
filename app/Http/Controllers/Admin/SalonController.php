@@ -123,7 +123,7 @@ class SalonController extends Controller
         $horaAhora = now()->format('H:i:s');
         $diaSemana = now()->dayOfWeekIso;
 
-        $pivots = DocenteHorarioPivot::with('docente.cargaAcademica', 'horario')
+        $pivots = DocenteHorarioPivot::with(['docente.cargaAcademica', 'docente.rol', 'horario', 'salon', 'coordinacion', 'cargaAcademica'])
             ->where('salon_id', $request->salon_id)
             ->get();
 
@@ -208,7 +208,7 @@ class SalonController extends Controller
         $dias = Horario::DIAS;
         $bloques = (new Horario)->todosLosBloques();
 
-        $asignaciones = DocenteHorarioPivot::with('docente.cargaAcademica', 'horario')
+        $asignaciones = DocenteHorarioPivot::with(['docente.cargaAcademica', 'docente.rol', 'horario', 'salon', 'coordinacion', 'cargaAcademica'])
             ->where('salon_id', $salon->id)
             ->get()
             ->keyBy(fn($p) => $p->horario_id);

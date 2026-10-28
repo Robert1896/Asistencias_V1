@@ -461,7 +461,7 @@ document.getElementById('btnLimpiarHorarios').addEventListener('click', function
 // Importar con reemplazo
 document.querySelector('#importarModal form').addEventListener('submit', function(e) {
     if (document.getElementById('reemplazarCheckbox').checked) {
-        if (!confirm('Esto eliminará TODAS las asignaciones y cargas académicas actuales y las reemplazará con las del archivo.\n\n¿Continuar?')) {
+        if (!confirm('Se eliminarán TODAS las asignaciones y cargas académicas actuales, incluidas las realizadas manualmente. Esta acción no se puede deshacer.\n\n¿Desea continuar?')) {
             e.preventDefault();
         }
     }
