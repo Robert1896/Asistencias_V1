@@ -250,6 +250,20 @@ class UsuarioController extends Controller
         try {
             ActivityLog::log('usuario_editar', "Editó el usuario {$usuario->email}", 'usuarios', ['email' => $usuario->email]);
         } catch (\Throwable $e) {
+            try {
+                \Illuminate\Support\Facades\DB::table('activity_log')->insert([
+                    'user_id' => auth()->id(),
+                    'accion' => 'usuario_editar',
+                    'descripcion' => "Editó el usuario {$usuario->email}",
+                    'modulo' => 'usuarios',
+                    'datos' => json_encode(['email' => $usuario->email]),
+                    'ip' => request()->ip(),
+                    'user_agent' => substr((string)request()->userAgent(), 0, 255),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Throwable $e2) {
+            }
         }
 
         return redirect()->route('admin.usuarios')->with('success', 'Usuario actualizado.');
