@@ -76,9 +76,11 @@ class HorarioController extends Controller
             array_merge($data, $dias)
         );
 
-        ActivityLog::log('horario_admin', "Horario administrativo guardado para usuario ID: {$request->usuario_id}", 'usuarios');
-
-        Log::info('Horario administrativo guardado', ['user_id' => $request->usuario_id]);
+        try {
+            ActivityLog::log('horario_admin', "Horario administrativo guardado para usuario ID: {$request->usuario_id}", 'usuarios');
+            Log::info('Horario administrativo guardado', ['user_id' => $request->usuario_id]);
+        } catch (\Throwable $e) {
+        }
 
         return redirect()->route('admin.horarios', ['tab' => 'administrativos'])
             ->with('success', 'Horario administrativo guardado.');
