@@ -24,13 +24,11 @@ class HorarioController extends Controller
             ->orderBy('nombre_completo')
             ->get(['id', 'nombre_completo']);
 
-        $docentes = User::query()
-            ->where('rol_id', 3)
+        $docentes = User::where('rol_id', 3)
             ->where('estatus', 'activo')
             ->orderBy('nombre_completo')
+            ->with(['horariosDocente', 'horariosDocente.horario', 'horariosDocente.salon', 'cargaAcademica'])
             ->get();
-
-        $docentes = $docentes->load(['horariosDocente.horario', 'horariosDocente.salon', 'cargaAcademica']);
 
         $horariosAdmin = HorarioAdministrativo::with('usuario')->whereHas('usuario', function ($q) {
             $q->whereIn('rol_id', [2, 4, 5])->where('estatus', 'activo');
