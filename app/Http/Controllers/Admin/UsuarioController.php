@@ -152,33 +152,14 @@ class UsuarioController extends Controller
 
         $rid = isset($data['rol_id']) ? (int)$data['rol_id'] : (int)$usuario->rol_id;
 
-        try {
-            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(
-                ['id' => 5],
-                ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']
-            );
-            if ($rid !== 5) {
-                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(
-                    ['id' => $rid],
-                    ['nombre' => $rid === 1 ? 'Superadministrador' : ($rid === 2 ? 'Docente' : ($rid === 3 ? 'Administrativo' : ($rid === 4 ? 'Asistente' : 'Rol'.$rid)))]
-                );
-            }
-        } catch (\Throwable $e) {
-        }
-
         $cambioPassword = !empty($data['password']);
 
-        // Forzar creación de rol 5 antes de cualquier actualización
         try {
             \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
             \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
-            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        } catch (\Throwable $e) {
-        }
-
-        try {
-            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
+            if ($rid !== 5) {
+                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => $rid], ['nombre' => $rid === 1 ? 'Superadministrador' : ($rid === 2 ? 'Docente' : ($rid === 3 ? 'Administrativo' : ($rid === 4 ? 'Asistente' : 'Rol'.$rid)))]);
+            }
             $up = [
                 'nombre'   => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
                 'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''),
