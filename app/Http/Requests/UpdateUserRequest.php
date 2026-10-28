@@ -57,15 +57,7 @@ class UpdateUserRequest extends FormRequest
         }
 
         // Permitir siempre rol 5 (Técnico)
-        if (isset($rules['rol_id']) && is_array($rules['rol_id'])) {
-            $hasIn = false;
-            foreach ($rules['rol_id'] as $r) {
-                if (is_object($r) && get_class($r) === Rule::class) {
-                    // keep
-                }
-            }
-            $rules['rol_id'] = ['required', 'integer'];
-        }
+        $rules['rol_id'] = ['required', 'integer'];
 
         // Nadie puede cambiar su propio rol (evita autopromoción, CWE-269)
         if ($usuario && (int) $usuario->id === (int) auth()->id()) {
