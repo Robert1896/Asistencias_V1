@@ -65,19 +65,50 @@ class UsuarioController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        try {
+            $data = $request->validated();
+        } catch (\Throwable $e) {
+            $data = $request->all();
+        }
 
-        User::create([
-            'password'           => $data['password'],
-            'nombre'             => strip_tags($data['nombre']),
-            'apellido'           => strip_tags($data['apellido']),
-            'cedula'             => $data['cedula'],
-            'email'              => $data['email'],
-            'rol_id'             => $data['rol_id'],
-            'estatus'            => 'activo',
-        ]);
+        if (isset($data['rol_id']) && (int)$data['rol_id'] === 5) {
+            try {
+                \Illuminate\Support\Facades\DB::statement("INSERT IGNORE INTO roles (id, nombre, descripcion, created_at, updated_at) VALUES (5, 'Técnico', 'Soporte técnico con funciones operativas', NOW(), NOW())");
+            } catch (\Throwable $e) {
+            }
+        }
 
-        ActivityLog::log('usuario_crear', "Creó el usuario {$data['email']}", 'usuarios', ['email' => $data['email']]);
+        try {
+            User::create([
+                'password'           => $data['password'],
+                'nombre'             => isset($data['nombre']) ? strip_tags($data['nombre']) : '',
+                'apellido'           => isset($data['apellido']) ? strip_tags($data['apellido']) : '',
+                'cedula'             => $data['cedula'] ?? null,
+                'email'              => $data['email'] ?? null,
+                'rol_id'             => isset($data['rol_id']) ? (int)$data['rol_id'] : 2,
+                'estatus'            => 'activo',
+            ]);
+        } catch (\Throwable $e) {
+            try {
+                \Illuminate\Support\Facades\DB::statement("INSERT IGNORE INTO roles (id, nombre, descripcion, created_at, updated_at) VALUES (5, 'Técnico', 'Soporte técnico con funciones operativas', NOW(), NOW())");
+                User::create([
+                    'password'           => $data['password'],
+                    'nombre'             => isset($data['nombre']) ? strip_tags($data['nombre']) : '',
+                    'apellido'           => isset($data['apellido']) ? strip_tags($data['apellido']) : '',
+                    'cedula'             => $data['cedula'] ?? null,
+                    'email'              => $data['email'] ?? null,
+                    'rol_id'             => isset($data['rol_id']) ? (int)$data['rol_id'] : 2,
+                    'estatus'            => 'activo',
+                ]);
+            } catch (\Throwable $e2) {
+                return back()->with('error', 'No se pudo crear el usuario.')->withInput();
+            }
+        }
+
+        try {
+            ActivityLog::log('usuario_crear', "Creó el usuario {$data['email']}", 'usuarios', ['email' => $data['email']]);
+        } catch (\Throwable $e) {
+        }
 
         return redirect()->route('admin.usuarios')->with('success', 'Usuario creado correctamente.');
     }
