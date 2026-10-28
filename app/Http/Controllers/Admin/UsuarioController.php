@@ -168,6 +168,14 @@ class UsuarioController extends Controller
 
         $cambioPassword = !empty($data['password']);
 
+        // Forzar creación de rol 5 antes de cualquier actualización
+        try {
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } catch (\Throwable $e) {
+        }
+
         try {
             \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
             $up = [
@@ -190,7 +198,9 @@ class UsuarioController extends Controller
             } catch (\Throwable $e3) {
             }
             try {
+                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
                 \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
+                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
                 \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
                 $up = [
                     'nombre'   => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
