@@ -39,6 +39,8 @@ class HorarioController extends Controller
 
     public function edit(User $usuario): View
     {
+        $user = Auth::user();
+        abort_if(!in_array((int)$user->rol_id, [1, 3], true), 403);
         $horario = HorarioAdministrativo::where('usuario_id', $usuario->id)->first();
 
         return view('admin.horario_edit', compact('usuario', 'horario'));
@@ -46,6 +48,8 @@ class HorarioController extends Controller
 
     public function guardarAdmin(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        abort_if(!in_array((int)$user->rol_id, [1, 3], true), 403);
         $data = $request->validate([
             'usuario_id'   => ['required', 'integer', Rule::exists('users', 'id')->where(function ($q) {
                 $q->whereIn('rol_id', [2, 4, 5])->where('estatus', 'activo');
@@ -87,6 +91,8 @@ class HorarioController extends Controller
 
     public function guardarCarga(StoreCargaRequest $request): RedirectResponse
     {
+        $user = Auth::user();
+        abort_if(!in_array((int)$user->rol_id, [1, 3], true), 403);
         $data = $request->validated();
 
         CargaAcademicaDocente::create($data);
@@ -101,6 +107,8 @@ class HorarioController extends Controller
 
     public function eliminarCarga(CargaAcademicaDocente $carga): RedirectResponse
     {
+        $user = Auth::user();
+        abort_if(!in_array((int)$user->rol_id, [1, 3], true), 403);
         ActivityLog::log('carga_eliminar', "Carga académica eliminada", 'usuarios', ['carga_id' => $carga->id]);
 
         Log::info('Carga académica eliminada', ['carga_id' => $carga->id, 'materia' => $carga->materia]);

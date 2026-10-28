@@ -24,6 +24,8 @@
     @auth
     @php $esDocente = auth()->user()->rol && auth()->user()->rol->nombre === 'Docente'; @endphp
     @php $esAsistente = auth()->user()->rol && auth()->user()->rol->nombre === 'Asistente'; @endphp
+    @php $esTecnico = auth()->user()->rol && (auth()->user()->rol->nombre === 'Técnico' || (int)auth()->user()->rol_id === 5); @endphp
+    @php $puedeGestionarHorarios = in_array((int)auth()->user()->rol_id, [1, 3], true); @endphp
 
     {{-- ═══ NAVBAR ═══ --}}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
@@ -47,7 +49,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{ route('empleado.horario') }}"><i class="bi bi-calendar-week me-1"></i>Horario</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('empleado.estadisticas') }}"><i class="bi bi-bar-chart-line me-1"></i>Estadísticas</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('justificaciones') }}"><i class="bi bi-clipboard-check me-1"></i>Justificaciones</a></li>
-                    @elseif ($esAsistente)
+                    @elseif ($esAsistente || $esTecnico)
                         <li class="nav-item"><a class="nav-link" href="{{ route('estacion.index') }}"><i class="bi bi-qr-code-scan me-1"></i>Estación</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('estacion.manual') }}"><i class="bi bi-pencil-square me-1"></i>Registro Manual</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.asistencias') }}"><i class="bi bi-calendar-check me-1"></i>Asistencias</a></li>
@@ -68,12 +70,14 @@
                                 @can('roles_ver')
                                     <li><a class="dropdown-item" href="{{ route('admin.roles') }}"><i class="bi bi-shield me-2"></i>Roles</a></li>
                                 @endcan
-                                @can('horarios_ver')
-                                    <li><a class="dropdown-item" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar me-2"></i>Horarios Base</a></li>
-                                @endcan
-                                @can('horarios_editar')
-                                    <li><a class="dropdown-item" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week me-2"></i>Horarios Docentes</a></li>
-                                @endcan
+                                @if($puedeGestionarHorarios)
+                                    @can('horarios_ver')
+                                        <li><a class="dropdown-item" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar me-2"></i>Horarios Base</a></li>
+                                    @endcan
+                                    @can('horarios_editar')
+                                        <li><a class="dropdown-item" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week me-2"></i>Horarios Docentes</a></li>
+                                    @endcan
+                                @endif
                                 @can('materias_editar')
                                     <li><a class="dropdown-item" href="{{ route('admin.materias') }}"><i class="bi bi-journal-bookmark me-2"></i>Materias</a></li>
                                 @endcan
@@ -146,7 +150,7 @@
                     <a class="offcanvas-nav-link" href="{{ route('empleado.horario') }}"><i class="bi bi-calendar-week"></i>Horario</a>
                     <a class="offcanvas-nav-link" href="{{ route('empleado.estadisticas') }}"><i class="bi bi-bar-chart-line"></i>Estadísticas</a>
                     <a class="offcanvas-nav-link" href="{{ route('justificaciones') }}"><i class="bi bi-clipboard-check"></i>Justificaciones</a>
-                @elseif ($esAsistente)
+                @elseif ($esAsistente || $esTecnico)
                     <a class="offcanvas-nav-link" href="{{ route('estacion.index') }}"><i class="bi bi-qr-code-scan"></i>Estación</a>
                     <a class="offcanvas-nav-link" href="{{ route('estacion.manual') }}"><i class="bi bi-pencil-square"></i>Registro Manual</a>
                     <a class="offcanvas-nav-link" href="{{ route('admin.asistencias') }}"><i class="bi bi-calendar-check"></i>Asistencias</a>
@@ -164,12 +168,14 @@
                     @can('roles_ver')
                         <a class="offcanvas-nav-link" href="{{ route('admin.roles') }}"><i class="bi bi-shield"></i>Roles</a>
                     @endcan
-                    @can('horarios_ver')
-                        <a class="offcanvas-nav-link" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar"></i>Horarios Base</a>
-                    @endcan
-                    @can('horarios_editar')
-                        <a class="offcanvas-nav-link" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week"></i>Horarios Docentes</a>
-                    @endcan
+                    @if($puedeGestionarHorarios)
+                        @can('horarios_ver')
+                            <a class="offcanvas-nav-link" href="{{ route('admin.horarios') }}"><i class="bi bi-calendar"></i>Horarios Base</a>
+                        @endcan
+                        @can('horarios_editar')
+                            <a class="offcanvas-nav-link" href="{{ route('admin.docentes.horarios') }}"><i class="bi bi-calendar-week"></i>Horarios Docentes</a>
+                        @endcan
+                    @endif
                     @can('materias_editar')
                         <a class="offcanvas-nav-link" href="{{ route('admin.materias') }}"><i class="bi bi-journal-bookmark"></i>Materias</a>
                     @endcan

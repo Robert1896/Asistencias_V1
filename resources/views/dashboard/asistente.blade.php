@@ -60,9 +60,6 @@
             </div>
         </a>
     </div>
-            </div>
-        </a>
-    </div>
     <div class="col-6 col-md-4">
         <a href="{{ route('estacion.manual') }}" class="text-decoration-none">
             <div class="card nav-btn grad-qr h-100">

@@ -350,7 +350,7 @@ class EstacionController extends Controller
         }
 
         $empleados = User::where('estatus', 'activo')
-            ->whereIn('rol_id', [2, 3])
+            ->whereIn('rol_id', [2, 3, 5])
             ->where(function ($q) use ($query) {
                 $escaped = escape_like($query);
                 $q->where('nombre', 'like', $escaped)

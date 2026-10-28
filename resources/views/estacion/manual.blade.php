@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const item = document.createElement('button');
                         item.type = 'button';
                         item.className = 'list-group-item list-group-item-action';
-                        const rolLabel = emp.rol_id === 3 ? 'Docente' : 'Administrativo';
+                        const rolLabel = emp.rol_id === 3 ? 'Docente' : (emp.rol_id === 5 ? 'Técnico' : 'Administrativo');
                         item.innerHTML = '<strong>' + esc(emp.nombre_completo) + '</strong>'
                             + (emp.cedula ? ' <span class="text-muted">(' + esc(emp.cedula) + ')</span>' : '')
                             + '<br><small class="text-muted">' + rolLabel + '</small>';
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         empleadoActual = emp;
         resultadosDiv.style.display = 'none';
         inputBusqueda.value = emp.nombre_completo;
-        const rolLabel = emp.rol_id === 3 ? 'Docente' : 'Administrativo';
+        const rolLabel = emp.rol_id === 3 ? 'Docente' : (emp.rol_id === 5 ? 'Técnico' : 'Administrativo');
         document.getElementById('empleadoNombre').textContent = emp.nombre_completo;
         document.getElementById('empleadoInfo').textContent = (emp.cedula ? 'Cédula: ' + emp.cedula + ' | ' : '') + 'Rol: ' + rolLabel;
         empleadoSeleccionado.style.display = 'block';
