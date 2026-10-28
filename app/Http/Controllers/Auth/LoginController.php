@@ -204,15 +204,20 @@ class LoginController extends Controller
     {
         $user = Auth::user();
         $userId = $user?->id;
-        $descripcion = $user ? "Cierre de sesión: {$user->email}" : "Cierre de sesión";
 
-        try {
-            ActivityLog::log('logout', $descripcion, 'auth', [
-                'email'   => $user?->email,
-                'user_id' => $userId,
-            ], $userId);
-        } catch (\Throwable $e) {
-            // Ignorar errores al registrar en bitácora para no bloquear el logout
+        if ($user) {
+            try {
+                \Illuminate\Support\Facades\DB::table('activity_log')->insert([
+                    'user_id'     => $userId,
+                    'accion'      => 'logout',
+                    'descripcion' => "Cierre de sesión: {$user->email}",
+                    'tipo'        => 'auth',
+                    'datos'       => json_encode(['email' => $user->email, 'user_id' => $userId, 'ip' => $request->ip()]),
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+            } catch (\Throwable $e) {
+            }
         }
 
         Auth::logout();
