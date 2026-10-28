@@ -1,0 +1,52 @@
+﻿<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * @property string $nombre
+ * @property string $apellido
+ * @property int $cedula
+ * @property string $email
+ * @property string|null $password
+ */
+class UpdateProfileRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        $userId = Auth::id();
+
+        return [
+            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃ±ÃÃ‰ÃÃ“ÃšÃ‘\s]+$/u'],
+            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃ±ÃÃ‰ÃÃ“ÃšÃ‘\s]+$/u'],
+            'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$userId}",
+            'email'    => "required|email|max:120|unique:users,email,{$userId}",
+            'password' => 'nullable|confirmed|' . \App\Support\PasswordPolicy::ruleString(),
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'cedula.required'       => 'La cÃ©dula es obligatoria.',
+            'cedula.integer'        => 'La cÃ©dula debe ser un nÃºmero entero.',
+            'cedula.digits_between' => 'La cÃ©dula debe tener entre 7 y 8 dÃ­gitos.',
+            'cedula.min'            => 'La cÃ©dula debe ser mÃ­nimo 1.000.000.',
+            'cedula.unique'         => 'Esta cÃ©dula ya estÃ¡ registrada.',
+            'nombre.regex'          => 'El nombre solo puede contener letras y espacios.',
+            'apellido.regex'        => 'El apellido solo puede contener letras y espacios.',
+            'password.min'          => 'La contraseÃ±a debe tener al menos 16 caracteres.',
+            'password.regex'        => 'La contraseÃ±a debe incluir al menos una mayÃºscula, una minÃºscula y un nÃºmero.',
+            'password.confirmed'    => 'Las contraseÃ±as no coinciden.',
+            'email.unique'          => 'Este correo ya estÃ¡ registrado.',
+            'email.email'           => 'El correo no es vÃ¡lido.',
+        ];
+    }
+}

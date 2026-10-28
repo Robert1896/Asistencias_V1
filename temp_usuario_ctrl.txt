@@ -1,0 +1,10 @@
+﻿    public function store(StoreUserRequest $request): RedirectResponse
+        $data = $request->validated();
+    public function update(UpdateUserRequest $request, User $usuario): RedirectResponse
+        $data = $request->validated();
+    public function importar(Request $request, ImportService $importService): RedirectResponse
+        $request->validate([
+        $resultado = $importService->importarUsuarios($request->file('archivo'));
+    public function destroy(Request $request, User $usuario): RedirectResponse
+        $request->validate([
+        if (!\Illuminate\Support\Facades\Hash::check($request->input('password_confirmacion'), auth()->user()->password)) {

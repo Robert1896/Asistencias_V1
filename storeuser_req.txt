@@ -1,0 +1,64 @@
+﻿<?php
+
+namespace App\Http\Requests;
+
+use App\Models\Rol;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+/**
+ * @property string $nombre
+ * @property string $apellido
+ * @property int $cedula
+ * @property string $email
+ * @property string $password
+ * @property int $rol_id
+ */
+class StoreUserRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃ±ÃÃ‰ÃÃ“ÃšÃ‘\s]+$/u'],
+            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃ±ÃÃ‰ÃÃ“ÃšÃ‘\s]+$/u'],
+            'cedula'   => 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
+            'email'    => 'required|email|max:120|unique:users,email',
+            'password' => 'required|' . \App\Support\PasswordPolicy::ruleString(),
+            'rol_id'   => ['required', 'integer', 'exists:roles,id', Rule::in($this->rolesAsignables())],
+        ];
+    }
+
+    /**
+     * Solo el Superadmin puede asignar el rol Superadmin (CWE-269).
+     */
+    private function rolesAsignables(): array
+    {
+        $actor = auth()->user();
+
+        return $actor && (int) $actor->rol_id === 1
+            ? Rol::pluck('id')->all()
+            : Rol::where('id', '!=', 1)->pluck('id')->all();
+    }
+
+    public function messages(): array
+    {
+        return [
+            'cedula.required'       => 'La cÃ©dula es obligatoria.',
+            'cedula.integer'        => 'La cÃ©dula debe ser un nÃºmero entero.',
+            'cedula.digits_between' => 'La cÃ©dula debe tener entre 7 y 8 dÃ­gitos.',
+            'cedula.min'            => 'La cÃ©dula debe ser mÃ­nimo 1.000.000.',
+            'cedula.unique'         => 'Esta cÃ©dula ya estÃ¡ registrada.',
+            'nombre.regex'          => 'El nombre solo puede contener letras y espacios.',
+            'apellido.regex'        => 'El apellido solo puede contener letras y espacios.',
+            'password.min'          => 'La contraseÃ±a debe tener al menos 16 caracteres.',
+            'password.regex'        => 'La contraseÃ±a debe incluir al menos una mayÃºscula, una minÃºscula y un nÃºmero.',
+            'email.unique'          => 'Este correo ya estÃ¡ registrado.',
+            'email.email'           => 'El correo no es vÃ¡lido.',
+        ];
+    }
+}

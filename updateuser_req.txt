@@ -1,0 +1,81 @@
+﻿<?php
+
+namespace App\Http\Requests;
+
+use App\Models\Rol;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+/**
+ * @property string $nombre
+ * @property string $apellido
+ * @property int $cedula
+ * @property string $email
+ * @property string|null $password
+ * @property int $rol_id
+ */
+class UpdateUserRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        $usuario = $this->route('usuario');
+        $actor   = auth()->user();
+
+        if (!$usuario || !$actor) {
+            return false;
+        }
+
+        // Una cuenta Superadmin solo puede ser editada por otra Superadmin (CWE-269)
+        return !((int) $usuario->rol_id === 1 && (int) $actor->rol_id !== 1);
+    }
+
+    public function rules(): array
+    {
+        $usuarioId = $this->route('usuario')->id;
+
+        $rules = [
+            'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃ±ÃÃ‰ÃÃ“ÃšÃ‘\s]+$/u'],
+            'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZÃ¡Ã©Ã­Ã³ÃºÃ±ÃÃ‰ÃÃ“ÃšÃ‘\s]+$/u'],
+            'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$usuarioId}",
+            'email'    => "required|email|max:120|unique:users,email,{$usuarioId}",
+            'rol_id'   => ['required', 'integer', 'exists:roles,id', Rule::in($this->rolesAsignables())],
+            'password' => 'nullable|' . \App\Support\PasswordPolicy::ruleString(),
+        ];
+
+        // Nadie puede cambiar su propio rol (evita autopromociÃ³n, CWE-269)
+        if ((int) $this->route('usuario')->id === (int) auth()->id()) {
+            $rules['rol_id'][] = Rule::in([(int) $this->route('usuario')->rol_id]);
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Solo el Superadmin puede asignar el rol Superadmin (CWE-269).
+     */
+    private function rolesAsignables(): array
+    {
+        $actor = auth()->user();
+
+        return $actor && (int) $actor->rol_id === 1
+            ? Rol::pluck('id')->all()
+            : Rol::where('id', '!=', 1)->pluck('id')->all();
+    }
+
+    public function messages(): array
+    {
+        return [
+            'cedula.required'       => 'La cÃ©dula es obligatoria.',
+            'cedula.integer'        => 'La cÃ©dula debe ser un nÃºmero entero.',
+            'cedula.digits_between' => 'La cÃ©dula debe tener entre 7 y 8 dÃ­gitos.',
+            'cedula.min'            => 'La cÃ©dula debe ser mÃ­nimo 1.000.000.',
+            'cedula.unique'         => 'Esta cÃ©dula ya estÃ¡ registrada.',
+            'nombre.regex'          => 'El nombre solo puede contener letras y espacios.',
+            'apellido.regex'        => 'El apellido solo puede contener letras y espacios.',
+            'password.min'          => 'La contraseÃ±a debe tener al menos 16 caracteres.',
+            'password.regex'        => 'La contraseÃ±a debe incluir al menos una mayÃºscula, una minÃºscula y un nÃºmero.',
+            'email.unique'          => 'Este correo ya estÃ¡ registrado.',
+            'email.email'           => 'El correo no es vÃ¡lido.',
+        ];
+    }
+}

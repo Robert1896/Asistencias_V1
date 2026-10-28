@@ -94,6 +94,18 @@
         [data-theme="dark"] .auth-footer {
             color: var(--text-secondary) !important;
         }
+        .auth-footer-fixed {
+            color: #6c757d;
+            font-size: 0.875rem;
+            display: block;
+            visibility: visible;
+            opacity: 1;
+            position: relative;
+            z-index: 9999;
+        }
+        [data-theme="dark"] .auth-footer-fixed {
+            color: #94a3b8 !important;
+        }
     </style>
 </head>
 <body class="d-flex align-items-center min-vh-100">
@@ -119,8 +131,12 @@
                 <main id="auth-content">
                     @yield('content')
                 </main>
-                <div class="text-center mt-3 small auth-footer">
-                    &copy; {{ date('Y') }} {{ config('app.domain') ?: 'UPTAG' }} - Todos los derechos reservados.
+            </div>
+        </div>
+        <div class="row justify-content-center mt-3">
+            <div class="col-md-5 col-lg-4 text-center">
+                <div class="auth-footer-fixed">
+                    &copy; {{ date('Y') }} {{ config('app.domain') ?? env('APP_DOMAIN') ?? 'UPTAG' }} - Todos los derechos reservados.
                 </div>
             </div>
         </div>

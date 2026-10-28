@@ -54,4 +54,7 @@
 
     </div>
 </div>
+<div class="text-center mt-3 mb-3 auth-footer-fixed">
+    &copy; {{ date('Y') }} {{ config('app.domain') ?? env('APP_DOMAIN') ?? 'UPTAG' }} - Todos los derechos reservados.
+</div>
 @endsection
