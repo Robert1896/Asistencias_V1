@@ -25,17 +25,12 @@ class HorarioController extends Controller
             ->orderBy('nombre_completo')
             ->get(['id', 'nombre_completo']);
 
-        $docentes = User::where('rol_id', 3)
-            ->where('estatus', 'activo')
-            ->orderBy('nombre_completo')
-            ->get(['id', 'nombre_completo', 'email']);
-
-        $docentes->load(['cargaAcademica']);
+        $docentes = collect();
 
         $horariosAdmin = HorarioAdministrativo::with('usuario')->whereHas('usuario', function ($q) {
             $q->whereIn('rol_id', [2, 4, 5])->where('estatus', 'activo');
         })->get();
-        $cargasDocentes = CargaAcademicaDocente::with('usuario')->get();
+        $cargasDocentes = collect();
 
         return view('admin.horarios', compact(
             'tab', 'administrativos', 'docentes', 'horariosAdmin', 'cargasDocentes'

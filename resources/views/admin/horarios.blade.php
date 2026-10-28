@@ -126,39 +126,9 @@
             </div>
         </div>
         <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                <table class="table table-hover mb-0" role="table" aria-label="Horarios docentes">
-                    <tbody>
-                        @forelse ($docentes as $d)
-                        <tr>
-                            <td>{{ $d->nombre_completo }}</td>
-                            <td>{{ $d->email }}</td>
-                            <td><span class="badge bg-info">{{ isset($d->horariosDocente) ? $d->horariosDocente->count() : 0 }} bloques</span></td>
-                            <td>
-                                @if (!isset($d->horariosDocente) || $d->horariosDocente->isEmpty())
-                                    <span class="text-muted small">Sin horarios asignados</span>
-                                @else
-                                    <div class="d-flex flex-wrap gap-1">
-                                        @foreach ($d->horariosDocente->sortBy(fn($h)=>($h->dia_semana ?? 0).(string)($h->hora_inicio ?? '')) as $hd)
-                                            <span class="badge bg-light text-dark border">
-                                                {{ isset($hd->dia_semana) && isset(\App\Models\Horario::DIAS[$hd->dia_semana]) ? \App\Models\Horario::DIAS[$hd->dia_semana] : ($hd->dia_semana ?? '') }} {{ isset($hd->hora_inicio) ? substr($hd->hora_inicio,0,5) : '' }}-{{ isset($hd->hora_fin) ? substr($hd->hora_fin,0,5) : '' }}
-                                                @if(isset($hd->salon) && $hd->salon) - {{ $hd->salon->nombre }} @endif
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.docentes.horarios.edit', $d) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil-square"></i> Modificar</a>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="5" class="text-muted text-center py-3">No hay docentes activos.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-                </div>
+            <div class="card-body text-center text-muted py-4">
+                <p class="mb-2">Para gestionar horarios docentes use la sección "Horarios Docentes".</p>
+                <a href="{{ route('admin.docentes.horarios') }}" class="btn btn-primary btn-sm">Ir a Horarios Docentes</a>
             </div>
         </div>
     </div>
