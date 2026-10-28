@@ -95,12 +95,43 @@ class LoginController extends Controller
         $request->session()->put('sesion_iniciada_en', now()->timestamp);
 
         try {
-            ActivityLog::log('login', "Inicio de sesión exitoso: " . ($user->cedula ?? $user->email), 'auth', [
-                'email'     => $user->email,
-                'user_id'   => $user->id,
-                'ip'        => $request->ip(),
-                'user_agent'=> $request->userAgent(),
-            ]);
+        try {
+            $dispositivo = 'desconocido';
+            $ua = strtolower($request->userAgent() ?? '');
+            if (str_contains($ua, 'ipad') || str_contains($ua, 'tablet') || str_contains($ua, 'kindle') || str_contains($ua, 'silk')) {
+                $dispositivo = 'tablet';
+            } elseif (str_contains($ua, 'mobile') || str_contains($ua, 'iphone') || str_contains($ua, 'ipod') || (str_contains($ua, 'android') && !str_contains($ua, 'tablet')) || str_contains($ua, 'windows phone') || str_contains($ua, 'opera mini')) {
+                $dispositivo = 'movil';
+            } elseif (str_contains($ua, 'windows') || str_contains($ua, 'macintosh') || str_contains($ua, 'linux') || str_contains($ua, 'x11') || str_contains($ua, 'cros')) {
+                $dispositivo = 'pc';
+            } elseif (str_contains($ua, 'mozilla') || str_contains($ua, 'chrome') || str_contains($ua, 'safari') || str_contains($ua, 'edge') || str_contains($ua, 'firefox')) {
+                $dispositivo = str_contains($ua, 'mobile') ? 'movil' : 'pc';
+            }
+
+            $insert = [
+                'user_id'     => $user->id,
+                'accion'      => 'login',
+                'descripcion' => "Inicio de sesión exitoso: " . ($user->cedula ?? $user->email),
+                'tipo'        => 'auth',
+                'datos'       => json_encode(['email' => $user->email, 'user_id' => $user->id, 'ip' => $request->ip(), 'user_agent' => $request->userAgent()]),
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ];
+            if (\Illuminate\Support\Facades\Schema::hasColumn('activity_log', 'dispositivo')) {
+                $insert['dispositivo'] = $dispositivo;
+            }
+            \Illuminate\Support\Facades\DB::table('activity_log')->insert($insert);
+        } catch (\Throwable $e) {
+            try {
+                ActivityLog::log('login', "Inicio de sesión exitoso: " . ($user->cedula ?? $user->email), 'auth', [
+                    'email'     => $user->email,
+                    'user_id'   => $user->id,
+                    'ip'        => $request->ip(),
+                    'user_agent'=> $request->userAgent(),
+                ]);
+            } catch (\Throwable $e2) {
+            }
+        }
         } catch (\Throwable $e) {
         }
 
