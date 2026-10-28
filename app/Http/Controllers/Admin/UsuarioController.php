@@ -93,7 +93,7 @@ class UsuarioController extends Controller
             ]);
         } catch (\Throwable $e) {
             try {
-                \Illuminate\Support\Facades\DB::statement("INSERT IGNORE INTO roles (id, nombre, descripcion, created_at, updated_at) VALUES (5, 'Técnico', 'Soporte técnico con funciones operativas', NOW(), NOW())");
+                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
                 User::create([
                     'password'           => $data['password'],
                     'nombre'             => isset($data['nombre']) ? strip_tags($data['nombre']) : '',
