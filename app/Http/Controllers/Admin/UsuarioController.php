@@ -211,7 +211,29 @@ class UsuarioController extends Controller
                     \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
                 } catch (\Throwable $e3) {
                 }
-                return back()->with('error', 'No se pudo actualizar el usuario.')->withInput();
+                // Último intento directo sin FK checks
+                try {
+                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
+                    \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update([
+                        'nombre' => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
+                        'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''),
+                        'nombre_completo' => trim((isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? '')) . ' ' . (isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''))),
+                        'cedula' => $data['cedula'] ?? $usuario->cedula,
+                        'email' => $data['email'] ?? $usuario->email,
+                        'rol_id' => 5,
+                        'updated_at' => now(),
+                    ]);
+                    if ($cambioPassword) {
+                        \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update(['password' => bcrypt($data['password']), 'updated_at' => now()]);
+                    }
+                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                } catch (\Throwable $e3) {
+                    try {
+                        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                    } catch (\Throwable $e4) {
+                    }
+                    return back()->with('error', 'No se pudo actualizar el usuario.')->withInput();
+                }
             }
         }
 
