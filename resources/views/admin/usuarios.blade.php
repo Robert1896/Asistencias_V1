@@ -70,7 +70,13 @@
                             <label class="form-label small" for="nuevoRol">Rol *</label>
                             <select name="rol_id" id="nuevoRol" class="form-select form-select-sm" required>
                                 <option value="">Seleccionar rol...</option>
-                                @foreach ($roles as $rol)
+                                @php
+                                    $rolesLista = $roles;
+                                    if (!$rolesLista->contains('id', 5)) {
+                                        $rolesLista = $rolesLista->push((object)['id' => 5, 'nombre' => 'Técnico'])->sortBy('id')->values();
+                                    }
+                                @endphp
+                                @foreach ($rolesLista as $rol)
                                     @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
                                         <option value="{{ $rol->id }}" {{ old('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
                                     @endif
@@ -279,7 +285,13 @@
                                 <div class="col-md-1">
                                     <label class="form-label small text-muted" for="editRol{{ $u->id }}">Rol</label>
                                     <select name="rol_id" id="editRol{{ $u->id }}" class="form-select form-select-sm" required>
-                                        @foreach ($roles as $rol)
+                                        @php
+                                            $rolesListaEdit = $roles;
+                                            if (!$rolesListaEdit->contains('id', 5)) {
+                                                $rolesListaEdit = $rolesListaEdit->push((object)['id' => 5, 'nombre' => 'Técnico'])->sortBy('id')->values();
+                                            }
+                                        @endphp
+                                        @foreach ($rolesListaEdit as $rol)
                                             @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
                                                 <option value="{{ $rol->id }}" {{ $rol->id === $u->rol_id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
                                             @endif

@@ -42,6 +42,24 @@ class UsuarioController extends Controller
         $usuarios = $query->orderBy('id')->paginate(15)->withQueryString();
         $roles    = Rol::orderBy('id')->get();
 
+        // Asegurar que el rol Técnico esté disponible en el formulario
+        if (!$roles->contains('id', 5)) {
+            try {
+                $tecnico = Rol::firstOrCreate(
+                    ['id' => 5],
+                    ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']
+                );
+                if (!isset($tecnico->id)) {
+                    $tecnico->id = 5;
+                    $tecnico->nombre = 'Técnico';
+                    $tecnico->descripcion = 'Soporte técnico con funciones operativas';
+                }
+                $roles = $roles->push($tecnico)->sortBy('id')->values();
+            } catch (\Throwable $e) {
+                $roles = $roles->push((object)['id' => 5, 'nombre' => 'Técnico'])->sortBy('id')->values();
+            }
+        }
+
         return view('admin.usuarios', compact('usuarios', 'roles'));
     }
 
