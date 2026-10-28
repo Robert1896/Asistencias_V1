@@ -21,7 +21,7 @@ class HorarioController extends Controller
         $tab = $request->query('tab', 'administrativos');
 
         $administrativos = User::whereIn('rol_id', [2, 4, 5])->where('estatus', 'activo')
-            ->orderBy('nombre_completo')->get(['id', 'nombre_completo', 'nombre_completo']);
+            ->orderBy('nombre_completo')->get(['id', 'nombre_completo']);
 
         $docentes = User::where('rol_id', 3)->where('estatus', 'activo')
             ->orderBy('nombre_completo')
