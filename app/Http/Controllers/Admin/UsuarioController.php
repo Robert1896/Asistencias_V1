@@ -72,10 +72,13 @@ class UsuarioController extends Controller
         }
 
         if (isset($data['rol_id']) && (int)$data['rol_id'] === 5) {
-            try {
-                \Illuminate\Support\Facades\DB::statement("INSERT IGNORE INTO roles (id, nombre, descripcion, created_at, updated_at) VALUES (5, 'Técnico', 'Soporte técnico con funciones operativas', NOW(), NOW())");
-            } catch (\Throwable $e) {
-            }
+        try {
+            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(
+                ['id' => 5],
+                ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']
+            );
+        } catch (\Throwable $e) {
+        }
         }
 
         try {
