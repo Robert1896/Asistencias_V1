@@ -207,7 +207,20 @@ class LoginController extends Controller
 
         if ($user) {
             try {
-                \Illuminate\Support\Facades\DB::table('activity_log')->insert([
+                $dispositivo = 'desconocido';
+                try {
+                    $ua = strtolower($request->userAgent() ?? '');
+                    if (str_contains($ua, 'ipad') || str_contains($ua, 'tablet') || str_contains($ua, 'kindle')) {
+                        $dispositivo = 'tablet';
+                    } elseif (str_contains($ua, 'mobile') || str_contains($ua, 'iphone') || str_contains($ua, 'ipod') || (str_contains($ua, 'android') && !str_contains($ua, 'tablet')) || str_contains($ua, 'windows phone')) {
+                        $dispositivo = 'movil';
+                    } elseif (str_contains($ua, 'windows') || str_contains($ua, 'macintosh') || str_contains($ua, 'linux') || str_contains($ua, 'x11')) {
+                        $dispositivo = 'pc';
+                    }
+                } catch (\Throwable $ex) {
+                }
+
+                $data = [
                     'user_id'     => $userId,
                     'accion'      => 'logout',
                     'descripcion' => "Cierre de sesión: {$user->email}",
@@ -215,7 +228,13 @@ class LoginController extends Controller
                     'datos'       => json_encode(['email' => $user->email, 'user_id' => $userId, 'ip' => $request->ip()]),
                     'created_at'  => now(),
                     'updated_at'  => now(),
-                ]);
+                ];
+
+                if (\Illuminate\Support\Facades\Schema::hasColumn('activity_log', 'dispositivo')) {
+                    $data['dispositivo'] = $dispositivo;
+                }
+
+                \Illuminate\Support\Facades\DB::table('activity_log')->insert($data);
             } catch (\Throwable $e) {
             }
         }

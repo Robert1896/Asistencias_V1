@@ -49,7 +49,7 @@ class ActivityLog extends Model
             ];
 
             if (Schema::hasColumn('activity_log', 'dispositivo')) {
-                $data['dispositivo'] = DeviceDetector::detectar();
+                $data['dispositivo'] = DeviceDetector::detectar(request()->userAgent());
             }
 
             return static::create($data);
