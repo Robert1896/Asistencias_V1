@@ -73,17 +73,21 @@ class UpdateUserRequest extends FormRequest
      */
     private function rolesAsignables(): array
     {
-        $actor = auth()->user();
+        try {
+            $actor = auth()->user();
 
-        $roles = $actor && (int) $actor->rol_id === 1
-            ? Rol::pluck('id')->all()
-            : Rol::where('id', '!=', 1)->pluck('id')->all();
+            $roles = $actor && (int) $actor->rol_id === 1
+                ? Rol::pluck('id')->all()
+                : Rol::where('id', '!=', 1)->pluck('id')->all();
 
-        if (!in_array(5, $roles)) {
-            $roles[] = 5;
+            if (!in_array(5, $roles)) {
+                $roles[] = 5;
+            }
+
+            return array_values(array_unique($roles));
+        } catch (\Throwable $e) {
+            return [2, 3, 4, 5];
         }
-
-        return array_values(array_unique($roles));
     }
 
     public function messages(): array
