@@ -57,9 +57,15 @@ class UpdateUserRequest extends FormRequest
     {
         $actor = auth()->user();
 
-        return $actor && (int) $actor->rol_id === 1
+        $roles = $actor && (int) $actor->rol_id === 1
             ? Rol::pluck('id')->all()
             : Rol::where('id', '!=', 1)->pluck('id')->all();
+
+        if (!in_array(5, $roles)) {
+            $roles[] = 5;
+        }
+
+        return array_values(array_unique($roles));
     }
 
     public function messages(): array
