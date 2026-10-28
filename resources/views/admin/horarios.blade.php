@@ -143,7 +143,7 @@
                                         @foreach ($d->horariosDocente->sortBy(fn($h)=>$h->dia_semana.(string)$h->hora_inicio) as $hd)
                                             <span class="badge bg-light text-dark border">
                                                 {{ \App\Models\Horario::DIAS[$hd->dia_semana] ?? $hd->dia_semana }} {{ substr($hd->hora_inicio,0,5) }}-{{ substr($hd->hora_fin,0,5) }}
-                                                @if($hd->pivot->salon_id && $hd->salon) · {{ $hd->salon->nombre }} @endif
+                                                @if(isset($hd->salon) && $hd->salon) - {{ $hd->salon->nombre }} @endif
                                             </span>
                                         @endforeach
                                     </div>
