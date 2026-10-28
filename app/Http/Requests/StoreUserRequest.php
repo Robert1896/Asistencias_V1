@@ -40,6 +40,7 @@ class StoreUserRequest extends FormRequest
         } catch (\Throwable $e) {
             $rules['rol_id'] = ['required', 'integer'];
         }
+        $rules['rol_id'] = ['required', 'integer'];
 
         return $rules;
     }
