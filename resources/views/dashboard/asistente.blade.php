@@ -37,6 +37,51 @@
 
 <small class="text-muted fw-bold text-uppercase mb-2 d-block acciones-label" style="font-size:0.62rem;letter-spacing:1px;">Acciones</small>
 
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-graph-up me-1"></i>Asistencias — Últimos 7 días</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartAsistenciaSemanal" height="100"></canvas>
+                <noscript>
+                    <table class="table table-sm small">
+                        <thead><tr><th>Día</th><th>Presentes</th><th>Tardes</th><th>Inasistentes</th></tr></thead>
+                        <tbody>
+                            @if(isset($chartLabels))
+                            @foreach ($chartLabels as $i => $label)
+                            <tr><td>{{ $label }}</td><td>{{ $chartPresentes[$i] ?? 0 }}</td><td>{{ $chartTardes[$i] ?? 0 }}</td><td>{{ $chartInasistentes[$i] ?? 0 }}</td></tr>
+                            @endforeach
+                            @endif
+                        </tbody>
+                    </table>
+                </noscript>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-pie-chart me-1"></i>Resumen del Mes</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartResumenMes" height="200"></canvas>
+                <noscript>
+                    <p class="small text-muted mt-2">
+                        Presentes: {{ $totalMes->presentes ?? 0 }} |
+                        Tardes: {{ $totalMes->tardes ?? 0 }} |
+                        Inasistentes: {{ $totalMes->inasistentes ?? 0 }} |
+                        Apoyo Sáb.: {{ $totalMes->apoyos ?? 0 }}
+                    </p>
+                </noscript>
+            </div>
+        </div>
+    </div>
+</div>
+
+<small class="text-muted fw-bold text-uppercase mb-2 d-block acciones-label" style="font-size:0.62rem;letter-spacing:1px;">Acciones</small>
+
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
         <a href="{{ route('qr.dinamico.page') }}" class="text-decoration-none">
@@ -103,49 +148,6 @@
                 </div>
             </div>
         </a>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="mb-0"><i class="bi bi-graph-up me-1"></i>Asistencias — Últimos 7 días</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="chartAsistenciaSemanal" height="100"></canvas>
-                <noscript>
-                    <table class="table table-sm small">
-                        <thead><tr><th>Día</th><th>Presentes</th><th>Tardes</th><th>Inasistentes</th></tr></thead>
-                        <tbody>
-                            @if(isset($chartLabels))
-                            @foreach ($chartLabels as $i => $label)
-                            <tr><td>{{ $label }}</td><td>{{ $chartPresentes[$i] ?? 0 }}</td><td>{{ $chartTardes[$i] ?? 0 }}</td><td>{{ $chartInasistentes[$i] ?? 0 }}</td></tr>
-                            @endforeach
-                            @endif
-                        </tbody>
-                    </table>
-                </noscript>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white">
-                <h6 class="mb-0"><i class="bi bi-pie-chart me-1"></i>Resumen del Mes</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="chartResumenMes" height="200"></canvas>
-                <noscript>
-                    <p class="small text-muted mt-2">
-                        Presentes: {{ $totalMes->presentes ?? 0 }} |
-                        Tardes: {{ $totalMes->tardes ?? 0 }} |
-                        Inasistentes: {{ $totalMes->inasistentes ?? 0 }} |
-                        Apoyo Sáb.: {{ $totalMes->apoyos ?? 0 }}
-                    </p>
-                </noscript>
-            </div>
-        </div>
     </div>
 </div>
 
