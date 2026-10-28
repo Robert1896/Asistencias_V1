@@ -38,7 +38,7 @@ class UpdateUserRequest extends FormRequest
             'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúñÁÉÍÓÚÑ\s]+$/u'],
             'cedula'   => "required|integer|digits_between:7,8|min:1000000|unique:users,cedula,{$usuarioId}",
             'email'    => "required|email|max:120|unique:users,email,{$usuarioId}",
-            'rol_id'   => ['required', 'integer', Rule::exists('roles', 'id'), Rule::in($this->rolesAsignables())],
+            'rol_id'   => ['required', 'integer', Rule::in($this->rolesAsignables())],
             'password' => array_merge(['nullable', 'confirmed'], \App\Support\PasswordPolicy::rules()),
         ];
 

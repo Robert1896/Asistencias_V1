@@ -29,7 +29,7 @@ class StoreUserRequest extends FormRequest
             'cedula'   => 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
             'email'    => 'required|email|max:120|unique:users,email',
             'password' => array_merge(['required', 'confirmed'], \App\Support\PasswordPolicy::rules()),
-            'rol_id'   => ['required', 'integer', Rule::exists('roles', 'id'), Rule::in($this->rolesAsignables())],
+            'rol_id'   => ['required', 'integer', Rule::in($this->rolesAsignables())],
         ];
     }
 
