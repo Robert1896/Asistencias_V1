@@ -178,6 +178,7 @@ class UsuarioController extends Controller
 
         try {
             \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
             $up = [
                 'nombre'   => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
                 'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''),
