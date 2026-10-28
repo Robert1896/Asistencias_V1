@@ -142,12 +142,12 @@ class UsuarioController extends Controller
         return redirect()->route('admin.usuarios')->with('success', 'Usuario creado correctamente.');
     }
 
-    public function update(UpdateUserRequest $request, User $usuario): RedirectResponse
+    public function update(Request $request, User $usuario): RedirectResponse
     {
         try {
-            $data = $request->validated();
-        } catch (\Throwable $e) {
             $data = $request->all();
+        } catch (\Throwable $e) {
+            $data = $request->input();
         }
 
         $rid = isset($data['rol_id']) ? (int)$data['rol_id'] : (int)$usuario->rol_id;
