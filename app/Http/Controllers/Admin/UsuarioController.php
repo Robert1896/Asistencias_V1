@@ -65,197 +65,59 @@ class UsuarioController extends Controller
 
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        try {
-            $data = $request->validated();
-        } catch (\Throwable $e) {
-            $data = $request->all();
-        }
+        $data = $request->validated();
 
-        $rid = isset($data['rol_id']) ? (int)$data['rol_id'] : 2;
-
-        try {
-            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(
-                ['id' => 5],
-                ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']
-            );
-            if ($rid !== 5) {
-                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(
-                    ['id' => $rid],
-                    ['nombre' => $rid === 1 ? 'Superadministrador' : ($rid === 2 ? 'Docente' : ($rid === 3 ? 'Administrativo' : ($rid === 4 ? 'Asistente' : 'Rol'.$rid)))]
-                );
-            }
-        } catch (\Throwable $e) {
-        }
+        $usuario = new User([
+            'nombre'   => $data['nombre'],
+            'apellido' => $data['apellido'],
+            'cedula'   => $data['cedula'],
+            'email'    => $data['email'],
+            'password' => $data['password'],
+            'rol_id'   => (int) $data['rol_id'],
+            'estatus'  => 'activo',
+        ]);
+        $usuario->save();
 
         try {
-            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            \Illuminate\Support\Facades\DB::table('users')->insert([
-                'password' => isset($data['password']) ? bcrypt($data['password']) : bcrypt('Temp123456789!'),
-                'nombre' => isset($data['nombre']) ? strip_tags($data['nombre']) : '',
-                'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : '',
-                'nombre_completo' => trim((isset($data['nombre']) ? strip_tags($data['nombre']) : '') . ' ' . (isset($data['apellido']) ? strip_tags($data['apellido']) : '')),
-                'cedula' => $data['cedula'] ?? null,
-                'email' => $data['email'] ?? null,
-                'rol_id' => $rid,
-                'estatus' => 'activo',
-                'codigo_qr_estatico' => \Illuminate\Support\Str::uuid()->toString(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        } catch (\Throwable $e) {
-            try {
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            } catch (\Throwable $e3) {
-            }
-            try {
-                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                \Illuminate\Support\Facades\DB::table('users')->insert([
-                    'password' => isset($data['password']) ? bcrypt($data['password']) : bcrypt('Temp123456789!'),
-                    'nombre' => isset($data['nombre']) ? strip_tags($data['nombre']) : '',
-                    'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : '',
-                    'nombre_completo' => trim((isset($data['nombre']) ? strip_tags($data['nombre']) : '') . ' ' . (isset($data['apellido']) ? strip_tags($data['apellido']) : '')),
-                    'cedula' => $data['cedula'] ?? null,
-                    'email' => $data['email'] ?? null,
-                    'rol_id' => 5,
-                    'estatus' => 'activo',
-                    'codigo_qr_estatico' => \Illuminate\Support\Str::uuid()->toString(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            } catch (\Throwable $e2) {
-                try {
-                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-                } catch (\Throwable $e3) {
-                }
-                return back()->with('error', 'No se pudo crear el usuario.')->withInput();
-            }
-        }
-
-        try {
-            ActivityLog::log('usuario_crear', "Creó el usuario {$data['email']}", 'usuarios', ['email' => $data['email']]);
+            ActivityLog::log('usuario_crear', "Creó el usuario {$usuario->email}", 'usuarios', ['email' => $usuario->email]);
         } catch (\Throwable $e) {
         }
 
         return redirect()->route('admin.usuarios')->with('success', 'Usuario creado correctamente.');
     }
 
-    public function update(Request $request, User $usuario): RedirectResponse
+    public function update(UpdateUserRequest $request, User $usuario): RedirectResponse
     {
-        try {
-            $data = $request->all();
-        } catch (\Throwable $e) {
-            $data = $request->input();
-        }
-
-        $rid = isset($data['rol_id']) ? (int)$data['rol_id'] : (int)$usuario->rol_id;
+        $data = $request->validated();
 
         $cambioPassword = !empty($data['password']);
 
-        try {
-            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
-            if ($rid !== 5) {
-                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => $rid], ['nombre' => $rid === 1 ? 'Superadministrador' : ($rid === 2 ? 'Docente' : ($rid === 3 ? 'Administrativo' : ($rid === 4 ? 'Asistente' : 'Rol'.$rid)))]);
-            }
-            $up = [
-                'nombre'   => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
-                'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''),
-                'nombre_completo' => trim((isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? '')) . ' ' . (isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''))),
-                'cedula'   => $data['cedula'] ?? $usuario->cedula,
-                'email'    => $data['email'] ?? $usuario->email,
-                'rol_id'   => $rid,
-                'updated_at' => now(),
-            ];
-            \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update($up);
-            if ($cambioPassword) {
-                \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update(['password' => bcrypt($data['password']), 'updated_at' => now()]);
-            }
-            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        } catch (\Throwable $e) {
-            try {
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            } catch (\Throwable $e3) {
-            }
-            try {
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                \Illuminate\Support\Facades\DB::table('roles')->updateOrInsert(['id' => 5], ['nombre' => 'Técnico', 'descripcion' => 'Soporte técnico con funciones operativas']);
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                $up = [
-                    'nombre'   => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
-                    'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''),
-                    'nombre_completo' => trim((isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? '')) . ' ' . (isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''))),
-                    'cedula'   => $data['cedula'] ?? $usuario->cedula,
-                    'email'    => $data['email'] ?? $usuario->email,
-                    'rol_id'   => 5,
-                    'updated_at' => now(),
-                ];
-                \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update($up);
-                if ($cambioPassword) {
-                    \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update(['password' => bcrypt($data['password']), 'updated_at' => now()]);
-                }
-                \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            } catch (\Throwable $e2) {
-                try {
-                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-                } catch (\Throwable $e3) {
-                }
-                // Último intento directo sin FK checks
-                try {
-                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                    \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update([
-                        'nombre' => isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? ''),
-                        'apellido' => isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''),
-                        'nombre_completo' => trim((isset($data['nombre']) ? strip_tags($data['nombre']) : ($usuario->nombre ?? '')) . ' ' . (isset($data['apellido']) ? strip_tags($data['apellido']) : ($usuario->apellido ?? ''))),
-                        'cedula' => $data['cedula'] ?? $usuario->cedula,
-                        'email' => $data['email'] ?? $usuario->email,
-                        'rol_id' => 5,
-                        'updated_at' => now(),
-                    ]);
-                    if ($cambioPassword) {
-                        \Illuminate\Support\Facades\DB::table('users')->where('id', $usuario->id)->update(['password' => bcrypt($data['password']), 'updated_at' => now()]);
-                    }
-                    \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-                } catch (\Throwable $e3) {
-                    try {
-                        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
-                    } catch (\Throwable $e4) {
-                    }
-                    return back()->with('error', 'No se pudo actualizar el usuario.')->withInput();
-                }
-            }
+        $usuario->fill([
+            'nombre'   => $data['nombre'],
+            'apellido' => $data['apellido'],
+            'cedula'   => $data['cedula'],
+            'email'    => $data['email'],
+            'rol_id'   => (int) $data['rol_id'],
+        ]);
+
+        if ($cambioPassword) {
+            // El cast 'hashed' del modelo se encarga de cifrar la contraseña.
+            $usuario->password = $data['password'];
         }
 
-        try {
-            if ($cambioPassword) {
-                $u = User::find($usuario->id);
-                if ($u) {
-                    $u->invalidarOtrasSesiones();
-                }
+        // El evento saving() del modelo recalcula nombre_completo.
+        $usuario->save();
+
+        if ($cambioPassword) {
+            try {
+                $usuario->invalidarOtrasSesiones();
+            } catch (\Throwable $e) {
             }
-        } catch (\Throwable $e) {
         }
 
         try {
             ActivityLog::log('usuario_editar', "Editó el usuario {$usuario->email}", 'usuarios', ['email' => $usuario->email]);
         } catch (\Throwable $e) {
-            try {
-                \Illuminate\Support\Facades\DB::table('activity_log')->insert([
-                    'user_id' => auth()->id(),
-                    'accion' => 'usuario_editar',
-                    'descripcion' => "Editó el usuario {$usuario->email}",
-                    'modulo' => 'usuarios',
-                    'datos' => json_encode(['email' => $usuario->email]),
-                    'ip' => request()->ip(),
-                    'user_agent' => substr((string)request()->userAgent(), 0, 255),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } catch (\Throwable $e2) {
-            }
         }
 
         return redirect()->route('admin.usuarios')->with('success', 'Usuario actualizado.');

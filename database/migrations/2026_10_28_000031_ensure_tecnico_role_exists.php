@@ -9,13 +9,35 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('roles')) {
-            DB::statement("INSERT IGNORE INTO roles (id, nombre, descripcion, created_at, updated_at) VALUES (5, 'Técnico', 'Soporte técnico con funciones operativas', NOW(), NOW())");
+            DB::table('roles')->insertOrIgnore([
+                'id' => 5,
+                'nombre' => 'Técnico',
+                'descripcion' => 'Soporte técnico con funciones operativas',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         if (Schema::hasTable('rol_permiso') && Schema::hasTable('permisos')) {
-            $permisos = [7, 9, 11, 12, 13, 14];
+            // Solo enlazar permisos que existan: en una instalación limpia la
+            // tabla está vacía en este punto y el seeder los crea después.
+            $codigos = [
+                'horarios_ver',
+                'estacion_operar',
+                'asistencias_justificar',
+                'asistencias_ver',
+                'asistencias_registrar',
+                'salones_ver',
+            ];
+            $permisos = DB::table('permisos')->whereIn('codigo', $codigos)->pluck('id');
+
             foreach ($permisos as $permisoId) {
-                DB::statement("INSERT IGNORE INTO rol_permiso (rol_id, permiso_id, created_at, updated_at) VALUES (5, {$permisoId}, NOW(), NOW())");
+                DB::table('rol_permiso')->insertOrIgnore([
+                    'rol_id' => 5,
+                    'permiso_id' => $permisoId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
     }

@@ -17,8 +17,19 @@ return new class extends Migration
             'descripcion' => 'Soporte técnico con funciones operativas',
         ]);
 
-        // Asignar mismos permisos que Asistente (9, 12, 13, 11, 14, 7)
-        $permisos = [9, 12, 13, 11, 14, 7];
+        // Asignar los mismos permisos que Asistente, solo si ya existen.
+        // (En una instalación limpia los permisos se crean en el seeder, así
+        // que aquí no hay nada que enlazar todavía.)
+        $codigos = [
+            'estacion_operar',
+            'asistencias_ver',
+            'asistencias_registrar',
+            'asistencias_justificar',
+            'salones_ver',
+            'horarios_ver',
+        ];
+        $permisos = DB::table('permisos')->whereIn('codigo', $codigos)->pluck('id');
+
         foreach ($permisos as $permisoId) {
             DB::table('rol_permiso')->insertOrIgnore([
                 'rol_id' => 5,

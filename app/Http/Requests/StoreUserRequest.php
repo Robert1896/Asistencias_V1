@@ -23,26 +23,19 @@ class StoreUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $rules = [
+        return [
             'nombre'   => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'-]+$/u'],
             'apellido' => ['required', 'string', 'max:80', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\'-]+$/u'],
             'cedula'   => 'required|integer|digits_between:7,8|min:1000000|unique:users,cedula',
             'email'    => 'required|email|max:120|unique:users,email',
             'password' => array_merge(['required', 'confirmed'], \App\Support\PasswordPolicy::rules()),
-            'rol_id'   => ['required', 'integer'],
+            'rol_id'   => [
+                'required',
+                'integer',
+                Rule::exists('roles', 'id'),
+                Rule::in($this->rolesAsignables()),
+            ],
         ];
-
-        try {
-            $rolesAsignables = $this->rolesAsignables();
-            if (!empty($rolesAsignables)) {
-                $rules['rol_id'] = ['required', 'integer', Rule::in($rolesAsignables)];
-            }
-        } catch (\Throwable $e) {
-            $rules['rol_id'] = ['required', 'integer'];
-        }
-        $rules['rol_id'] = ['required', 'integer'];
-
-        return $rules;
     }
 
     /**
@@ -56,11 +49,7 @@ class StoreUserRequest extends FormRequest
             ? Rol::pluck('id')->all()
             : Rol::where('id', '!=', 1)->pluck('id')->all();
 
-        if (!in_array(5, $roles)) {
-            $roles[] = 5;
-        }
-
-        return array_values(array_unique($roles));
+        return array_values(array_unique(array_map('intval', $roles)));
     }
 
     public function messages(): array
@@ -78,6 +67,8 @@ class StoreUserRequest extends FormRequest
             'password.confirmed'    => 'Las contraseñas no coinciden.',
             'email.unique'          => 'Este correo ya está registrado.',
             'email.email'           => 'El correo no es válido.',
+            'rol_id.exists'         => 'El rol seleccionado no existe.',
+            'rol_id.in'             => 'No tienes permiso para asignar ese rol.',
         ];
     }
 }

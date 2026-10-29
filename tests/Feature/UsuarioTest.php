@@ -16,9 +16,12 @@ class UsuarioTest extends TestCase
 
     private function seedRolesAndPermissions(): void
     {
-        DB::table('roles')->insert([
+        DB::table('roles')->insertOrIgnore([
             ['id' => 1, 'nombre' => 'Superadmin', 'descripcion' => 'Acceso total'],
+            ['id' => 2, 'nombre' => 'Administrativo', 'descripcion' => 'Personal de oficina'],
             ['id' => 3, 'nombre' => 'Docente', 'descripcion' => 'Profesores'],
+            ['id' => 4, 'nombre' => 'Asistente', 'descripcion' => 'Operador de estación'],
+            ['id' => 5, 'nombre' => 'Técnico', 'descripcion' => 'Soporte técnico'],
         ]);
 
         DB::table('permisos')->insert([
@@ -69,7 +72,7 @@ class UsuarioTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.usuarios'));
-        $this->assertDatabaseHas('users', ['email' => 'juan@test.com']);
+        $this->assertDatabaseHas('users', ['email' => 'juan@test.com', 'rol_id' => 3]);
     }
 
     public function test_admin_can_toggle_user_status(): void
@@ -142,5 +145,90 @@ class UsuarioTest extends TestCase
 
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    private function datosEdicion(User $user, int $rolId): array
+    {
+        return [
+            'nombre'   => $user->nombre,
+            'apellido' => $user->apellido,
+            // Cédula válida y única derivada del id (evita aleatorios < 1.000.000).
+            'cedula'   => (string) (10000000 + $user->id),
+            'email'    => $user->email,
+            'rol_id'   => $rolId,
+        ];
+    }
+
+    public function test_admin_can_change_user_role_from_tecnico_to_docente(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user  = User::factory()->create(['rol_id' => 5]);
+
+        $response = $this->actingAs($admin)
+            ->put(route('admin.usuarios.update', $user), $this->datosEdicion($user, 3));
+
+        $response->assertRedirect(route('admin.usuarios'));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'rol_id' => 3]);
+    }
+
+    public function test_admin_can_change_user_role_from_tecnico_to_administrativo(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user  = User::factory()->create(['rol_id' => 5]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.usuarios.update', $user), $this->datosEdicion($user, 2))
+            ->assertRedirect(route('admin.usuarios'));
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'rol_id' => 2]);
+    }
+
+    public function test_changing_user_role_does_not_rename_roles(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user  = User::factory()->create(['rol_id' => 5]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.usuarios.update', $user), $this->datosEdicion($user, 3));
+
+        $this->assertDatabaseHas('roles', ['id' => 1, 'nombre' => 'Superadmin']);
+        $this->assertDatabaseHas('roles', ['id' => 2, 'nombre' => 'Administrativo']);
+        $this->assertDatabaseHas('roles', ['id' => 3, 'nombre' => 'Docente']);
+        $this->assertDatabaseHas('roles', ['id' => 4, 'nombre' => 'Asistente']);
+        $this->assertDatabaseHas('roles', ['id' => 5, 'nombre' => 'Técnico']);
+    }
+
+    public function test_update_rejects_unknown_role(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user  = User::factory()->create(['rol_id' => 5]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.usuarios.update', $user), $this->datosEdicion($user, 99))
+            ->assertSessionHasErrors('rol_id');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'rol_id' => 5]);
+    }
+
+    public function test_admin_cannot_change_own_role(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+
+        $this->actingAs($admin)
+            ->put(route('admin.usuarios.update', $admin), $this->datosEdicion($admin, 2))
+            ->assertSessionHasErrors('rol_id');
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'rol_id' => 1]);
     }
 }
