@@ -84,11 +84,16 @@
                     </thead>
                     <tbody>
                         @php
+                            // Se normaliza a HH:MM:SS porque SQLite guarda 'HH:MM'
+                            // y MySQL 'HH:MM:SS'; sin esto un mismo rango podría
+                            // aparecer dos veces como filas distintas.
                             $rangos = [];
                             foreach ($agrupado['bloques'] as $dia => $bloques) {
                                 foreach ($bloques as $b) {
-                                    $key = $b->hora_inicio . '-' . $b->hora_fin;
-                                    $rangos[$key] = [$b->hora_inicio, $b->hora_fin];
+                                    $inicio = \App\Models\Horario::normalizarHora($b->hora_inicio);
+                                    $fin    = \App\Models\Horario::normalizarHora($b->hora_fin);
+                                    $key = $inicio . '-' . $fin;
+                                    $rangos[$key] = [$inicio, $fin];
                                 }
                             }
                             ksort($rangos);
@@ -104,7 +109,8 @@
                                 @foreach ($agrupado['dias'] as $num => $nom)
                                     @php
                                         $bloque = collect($agrupado['bloques'][$num] ?? [])
-                                            ->firstWhere('hora_inicio', $rango[0]);
+                                            ->first(fn ($b) => \App\Models\Horario::normalizarHora($b->hora_inicio) === $rango[0]
+                                                && \App\Models\Horario::normalizarHora($b->hora_fin) === $rango[1]);
                                         $checked = false;
                                         $tipoSeleccionado = 'carga_academica';
                                         $coordSeleccionada = '';
@@ -205,7 +211,10 @@ value="{{ $seccionVal }}"
                                                     data-marcar-checkbox="chk-{{ $bloque->id }}"
                                                    style="{{ $tipoSeleccionado !== 'carga_academica' ? 'display:none;' : '' }}">
                                         @else
-                                            <span class="text-muted" style="font-size:0.7rem;">—</span>
+                                            <span class="text-muted" style="font-size:0.7rem;"
+                                                  title="No existe un bloque para este día y hora">
+                                                Sin bloque
+                                            </span>
                                         @endif
                                     </td>
                                 @endforeach

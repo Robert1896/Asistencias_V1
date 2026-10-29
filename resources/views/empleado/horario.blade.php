@@ -52,7 +52,8 @@
                                     $spanCount = 1;
                                     if (isset($agrupado[$diaNum])) {
                                         foreach ($agrupado[$diaNum] as $a) {
-                                            if ($a->horario->hora_inicio === $bloque['hora_inicio'] && $a->horario->hora_fin === $bloque['hora_fin']) {
+                                            if (\App\Models\Horario::normalizarHora($a->horario->hora_inicio) === $bloque['hora_inicio']
+                                                && \App\Models\Horario::normalizarHora($a->horario->hora_fin) === $bloque['hora_fin']) {
                                                 $match = $a;
                                                 break;
                                             }
@@ -66,7 +67,8 @@
                                             $foundMatch = false;
                                             if (isset($agrupado[$diaNum])) {
                                                 foreach ($agrupado[$diaNum] as $a) {
-                                                    if ($a->horario->hora_inicio === $next['hora_inicio'] && $a->horario->hora_fin === $next['hora_fin']) {
+                                                    if (\App\Models\Horario::normalizarHora($a->horario->hora_inicio) === $next['hora_inicio']
+                                                        && \App\Models\Horario::normalizarHora($a->horario->hora_fin) === $next['hora_fin']) {
                                                         $foundMatch = true;
                                                         break;
                                                     }

@@ -361,18 +361,16 @@ class ImportService
                 $errores[] = "Fila {$fila}: día inválido '{$dia}'. Use: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado (sin importar mayúsculas).";
                 continue;
             }
-            $horario = Horario::where('dia_semana', $diaNum)
-                ->where('hora_inicio', $horaInicio)
-                ->where('hora_fin', $horaFin)
-                ->first();
+            $horario = Horario::buscarBloque($diaNum, $horaInicio, $horaFin);
             if (!$horario) {
-                $horario = Horario::create([
-                    'dia_semana'  => $diaNum,
-                    'hora_inicio' => $horaInicio,
-                    'hora_fin'    => $horaFin,
-                    'nombre'      => "{$dia} {$horaInicio}–{$horaFin}",
-                ]);
-                $label = "{$dia} {$horaInicio}-{$horaFin}";
+                // Un rango nuevo se crea para los seis días: así el grid de
+                // asignación docente lo ofrece en cualquier día y no quedan
+                // celdas "sin bloque".
+                Horario::asegurarRango($horaInicio, $horaFin);
+
+                $horario = Horario::buscarBloque($diaNum, $horaInicio, $horaFin);
+
+                $label = "{$horaInicio}-{$horaFin}";
                 if (!in_array($label, $horariosCreados)) {
                     $horariosCreados[] = $label;
                 }

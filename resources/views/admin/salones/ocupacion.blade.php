@@ -188,6 +188,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const DIAS = @json($dias);
     const BLOQUES = @json($bloques);
 
+    // SQLite guarda 'HH:MM' y MySQL 'HH:MM:SS'; se compara siempre normalizado.
+    const normHora = (h) => (h && h.length === 5 ? h + ':00' : h);
+
     let currentSalonId = '';
     let currentSalonName = '';
     let currentData = {};
@@ -241,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
         for (const [horarioId, pivots] of Object.entries(data)) {
             for (const p of pivots) {
                 if (!p.horario) continue;
-                const key = p.horario.dia_semana + '|' + p.horario.hora_inicio + '|' + p.horario.hora_fin;
+                const key = p.horario.dia_semana + '|' + normHora(p.horario.hora_inicio) + '|' + normHora(p.horario.hora_fin);
                 if (!index[key]) index[key] = [];
                 index[key].push(p);
             }

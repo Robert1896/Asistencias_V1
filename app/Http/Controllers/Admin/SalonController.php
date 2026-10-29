@@ -217,7 +217,9 @@ class SalonController extends Controller
         foreach ($asignaciones as $pid => $pivot) {
             $h = $pivot->horario;
             if (!$h) continue;
-            $key = $h->dia_semana . '|' . $h->hora_inicio . '|' . $h->hora_fin;
+            $key = $h->dia_semana . '|'
+                . Horario::normalizarHora($h->hora_inicio) . '|'
+                . Horario::normalizarHora($h->hora_fin);
             $index[$key][] = $pivot;
         }
 

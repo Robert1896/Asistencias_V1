@@ -11,7 +11,10 @@
     foreach ($asignaciones as $pid => $pivot) {
         $h = $pivot->horario;
         if (!$h) continue;
-        $key = $h->dia_semana . '|' . $h->hora_inicio . '|' . $h->hora_fin;
+        // Hora normalizada: SQLite guarda 'HH:MM' y MySQL 'HH:MM:SS'.
+        $key = $h->dia_semana . '|'
+            . \App\Models\Horario::normalizarHora($h->hora_inicio) . '|'
+            . \App\Models\Horario::normalizarHora($h->hora_fin);
         $index[$key][] = $pivot;
     }
 

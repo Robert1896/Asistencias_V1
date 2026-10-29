@@ -42,6 +42,15 @@ class DocenteHorarioController extends Controller
 
     public function edit(User $user): View
     {
+        // Red de seguridad: si la malla quedó incompleta (un bloque borrado o
+        // una importación con horas sueltas), se completa antes de pintar el
+        // grid para que ninguna celda quede sin poder asignarse.
+        try {
+            Horario::sincronizarMalla();
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo sincronizar la malla horaria: ' . $e->getMessage());
+        }
+
         $agrupado       = Horario::agrupadosPorDia();
         $coordinaciones = Coordinacion::orderBy('nombre')->get();
         $salones        = Salon::orderBy('nombre')->get();
