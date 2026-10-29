@@ -94,10 +94,15 @@
     var iconoCamara = document.getElementById('iconoCamara');
     var textoCamara = document.getElementById('textoCamara');
     var msgCamara = document.getElementById('msgCamara');
-    var html5QrCode = null, bloqueado = false, camaraActiva = false;
+    var html5QrCode = null;
+    var iniciando = false;    // el start de la cámara está en vuelo
+    var escaneando = false;   // la cámara está emitiendo imagen
+    var procesando = false;   // hay un escaneo enviándose al servidor
+    var deteniendo = false;   // se pidió detener y el stop está en vuelo
+    var haEscaneado = false;  // ya se procesó al menos un QR en esta pantalla
 
     function actualizarUI(encendida) {
-        camaraActiva = encendida;
+        escaneando = encendida;
         if (encendida) {
             estadoCamara.className = 'badge bg-success me-2';
             estadoCamara.textContent = '●';
@@ -109,24 +114,49 @@
             estadoCamara.className = 'badge bg-secondary me-2';
             estadoCamara.textContent = '●';
             iconoCamara.className = 'bi bi-camera-video';
-            textoCamara.textContent = 'Iniciar Cámara';
+            textoCamara.textContent = haEscaneado ? 'Escanear otro salón' : 'Iniciar Cámara';
             btnToggle.className = 'btn btn-outline-success btn-sm';
-            msgCamara.textContent = 'Presione "Iniciar Cámara" para escanear el QR del salón';
+            msgCamara.textContent = haEscaneado
+                ? 'Escaneo completado. Pulse "Escanear otro salón" si necesita registrar otra clase.'
+                : 'Presione "Iniciar Cámara" para escanear el QR del salón';
         }
     }
 
     function limpiarReader() { while (readerEl.firstChild) readerEl.removeChild(readerEl.firstChild); }
 
-    function crearEscanner() {
-        html5QrCode = new Html5Qrcode('reader');
-        html5QrCode.start(
+    function detenerInstancia(scanner) {
+        if (!scanner) return Promise.resolve();
+
+        return scanner.stop().catch(function() {}).then(function() {
+            try { scanner.clear(); } catch (e) {}
+            limpiarReader();
+        });
+    }
+
+    function iniciarEscaner() {
+        // Sin dobles arranques: nunca se crea un segundo Html5Qrcode sobre el mismo div.
+        if (iniciando || escaneando || procesando || deteniendo) return;
+
+        iniciando = true;
+        limpiarReader();
+        var scanner = new Html5Qrcode('reader');
+        html5QrCode = scanner;
+
+        scanner.start(
             { facingMode: 'environment' },
             { fps: 15, qrbox: { width: 250, height: 250 } },
             onScanSuccess, function() {}
         ).then(function() {
+            iniciando = false;
+            if (html5QrCode !== scanner) {
+                // Se pidió detener mientras la cámara arrancaba.
+                return detenerInstancia(scanner);
+            }
             actualizarUI(true);
             mostrarEstado('Cámara activa — Listo para escanear', 'success');
         }).catch(function() {
+            iniciando = false;
+            if (html5QrCode === scanner) html5QrCode = null;
             actualizarUI(false);
             var isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
             if (!isSecure) {
@@ -137,27 +167,48 @@
         });
     }
 
-    function iniciarEscaner() {
-        if (html5QrCode) {
-            html5QrCode.stop().then(function() { html5QrCode.clear(); limpiarReader(); crearEscanner(); })
-                .catch(function() { html5QrCode.clear(); limpiarReader(); crearEscanner(); });
-        } else { limpiarReader(); crearEscanner(); }
+    /**
+     * Detiene la cámara. Con silencioso = true no pisa el mensaje del
+     * servidor ("Tarde", "ya registró", "ya finalizó", etc.).
+     */
+    function detenerEscaner(silencioso) {
+        if (deteniendo) return;
+
+        if (!html5QrCode) {
+            actualizarUI(false);
+            return;
+        }
+
+        var scanner = html5QrCode;
+        html5QrCode = null;
+        deteniendo = true;
+        actualizarUI(false);
+
+        detenerInstancia(scanner).then(function() {
+            deteniendo = false;
+            if (!silencioso) {
+                mostrarEstado('Cámara detenida.', 'info');
+            }
+        });
     }
 
-    function detenerEscaner() {
-        if (html5QrCode) {
-            html5QrCode.stop().then(function() { html5QrCode.clear(); html5QrCode = null; limpiarReader(); actualizarUI(false); mostrarEstado('Cámara detenida.', 'info'); })
-                .catch(function() { html5QrCode.clear(); html5QrCode = null; limpiarReader(); actualizarUI(false); mostrarEstado('Cámara detenida.', 'info'); });
-        } else actualizarUI(false);
+    function toggleCamara() {
+        if (escaneando) {
+            detenerEscaner(false);
+        } else {
+            iniciarEscaner();
+        }
     }
-
-    function toggleCamara() { camaraActiva ? detenerEscaner() : iniciarEscaner(); }
 
     function onScanSuccess(decodedText) {
-        if (bloqueado) return;
-        bloqueado = true;
+        if (procesando || !escaneando) return;
+
+        procesando = true;
+        haEscaneado = true;
+        btnToggle.disabled = true;
+
         mostrarEstado('Procesando...', 'info');
-        detenerEscaner();
+        detenerEscaner(true);
 
         fetch('{{ route("estacion.salon-qr") }}', {
             method: 'POST',
@@ -177,7 +228,13 @@
             }
         })
         .catch(function() { mostrarAlerta('error', 'Error de conexión'); mostrarEstado('Error de conexión', 'danger'); })
-        .finally(function() { setTimeout(function() { bloqueado = false; iniciarEscaner(); }, 2500); });
+        .finally(function() {
+            // La cámara se queda apagada a propósito: reabrirla automáticamente
+            // releía el mismo QR y parecía un bucle. El docente decide cuándo
+            // escanear otro salón con el botón.
+            procesando = false;
+            btnToggle.disabled = false;
+        });
     }
 
     function mostrarAlerta(tipo, mensaje) {

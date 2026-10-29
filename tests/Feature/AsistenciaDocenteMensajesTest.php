@@ -168,4 +168,18 @@ class AsistenciaDocenteMensajesTest extends TestCase
         $response->assertSee('Bloque ya finalizado');
         $response->assertSee('13:05 – 13:50');
     }
+
+    public function test_el_escaner_no_reactiva_la_camara_automaticamente(): void
+    {
+        $docente = $this->docente();
+
+        $response = $this->actingAs($docente)->get(route('docente.escanear.salon'));
+
+        $response->assertOk();
+        // Tras escanear, la cámara queda apagada y solo se reabre con el botón.
+        $response->assertSee('Escanear otro salón');
+        $response->assertDontSee('iniciarEscaner(); }, 2500', false);
+        $response->assertDontSee('bloqueado = false', false);
+        $response->assertSee('detenerEscaner(true)', false);
+    }
 }
