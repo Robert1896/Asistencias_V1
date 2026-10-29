@@ -231,4 +231,62 @@ class UsuarioTest extends TestCase
 
         $this->assertDatabaseHas('users', ['id' => $admin->id, 'rol_id' => 1]);
     }
+
+    public function test_error_de_validacion_reabre_la_fila_con_los_datos_escritos(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user  = User::factory()->create(['rol_id' => 5, 'cedula' => 12345678]);
+        $otro  = User::factory()->create(['rol_id' => 4, 'cedula' => 87654321]);
+
+        $payload = $this->datosEdicion($user, 3);
+        $payload['nombre']         = 'Evelyn Renombrada';
+        $payload['cedula']         = $otro->cedula; // ya registrada → falla
+        $payload['_form']          = 'editar';
+        $payload['usuario_id']     = $user->id;
+        $payload['usuario_nombre'] = $user->nombre_completo;
+
+        $response = $this->followingRedirects()
+            ->actingAs($admin)
+            ->from(route('admin.usuarios'))
+            ->put(route('admin.usuarios.update', $user), $payload);
+
+        $response->assertOk();
+
+        // Alerta global que nombra al usuario afectado.
+        $response->assertSee('No se pudieron guardar los cambios de ' . $user->nombre_completo, false);
+
+        // La fila del usuario se reabre sola.
+        $response->assertSee('class="collapse show" id="edit-' . $user->id . '"', false);
+
+        // El campo conserva lo que se escribió, no el valor de la base de datos.
+        $response->assertSee('value="Evelyn Renombrada"', false);
+
+        // El formulario de creación no se contamina con los datos de la fila.
+        $html = $response->getContent();
+        preg_match('/id="nuevoNombre"[^>]*value="([^"]*)"/s', $html, $coincidencia);
+        $this->assertSame('', $coincidencia[1] ?? null);
+
+        // Nada se guardó.
+        $this->assertDatabaseHas('users', [
+            'id'     => $user->id,
+            'rol_id' => 5,
+            'nombre' => $user->nombre,
+        ]);
+    }
+
+    public function test_la_fila_de_edicion_llega_cerrada_cuando_no_hay_errores(): void
+    {
+        $this->seedRolesAndPermissions();
+
+        $admin = $this->createAdmin();
+        $user  = User::factory()->create(['rol_id' => 5, 'cedula' => 12345678]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.usuarios'))
+            ->assertOk()
+            ->assertSee('class="collapse" id="edit-' . $user->id . '"', false)
+            ->assertDontSee('alertErroresGlobales', false);
+    }
 }

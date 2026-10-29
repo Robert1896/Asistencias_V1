@@ -4,10 +4,49 @@
 @section('tone-level', '1')
 
 @section('content')
+@php
+    // Si el envío que falló vino del formulario inline de una fila, sabemos
+    // exactamente a qué usuario pertenece el error y podemos reabrir su fila.
+    $esEdicionConError = old('_form') === 'editar';
+    $usuarioErrorId    = $esEdicionConError ? (int) old('usuario_id') : null;
+    $nombreError       = $esEdicionConError ? old('usuario_nombre') : null;
+    $esBorradoConError = !$esEdicionConError && $errors->has('password_confirmacion');
+@endphp
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0"><i class="bi bi-people me-2"></i>Gestión de Usuarios</h1>
     <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">← Dashboard</a>
 </div>
+
+{{-- ═══ ERRORES DE VALIDACIÓN (visibles aunque estés al final de la página) ═══ --}}
+@if ($errors->any())
+    <div class="alert alert-danger shadow-sm" role="alert" id="alertErroresGlobales">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+            <div class="flex-grow-1">
+                <strong class="d-block mb-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    @if ($esEdicionConError)
+                        No se pudieron guardar los cambios{{ $nombreError ? ' de ' . $nombreError : '' }}
+                    @elseif ($esBorradoConError)
+                        No se eliminó el usuario
+                    @else
+                        Revisa el formulario: no se guardó nada
+                    @endif
+                </strong>
+                <ul class="mb-0 small ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @if ($usuarioErrorId)
+                <a href="#edit-{{ $usuarioErrorId }}" class="btn btn-sm btn-outline-danger text-nowrap" id="irAlFormularioError">
+                    Ir al formulario <i class="bi bi-arrow-down-short"></i>
+                </a>
+            @endif
+        </div>
+    </div>
+@endif
 
 {{-- ═══ CREAR USUARIO ═══ --}}
 <div class="card shadow-sm border-0 mb-4">
@@ -19,13 +58,7 @@
     </div>
     <div class="collapse show" id="formCrear">
         <div class="card-body">
-            @if ($errors->any())
-                <div class="alert alert-danger py-1 px-3 small mb-3">
-                    @foreach ($errors->all() as $error)
-                        <span class="me-2">{{ $error }}</span>@if(!$loop->last)&middot;@endif
-                    @endforeach
-                </div>
-            @endif
+            {{-- Los errores de validación se muestran en la alerta global de arriba --}}
             <form method="POST" action="{{ route('admin.usuarios.store') }}" data-validate>
                 @csrf
                 {{-- Sección 1: Datos Personales --}}
@@ -36,27 +69,27 @@
                         <div class="col-md-3">
                             <label class="form-label small" for="nuevoNombre">Nombre *</label>
                             <input type="text" name="nombre" id="nuevoNombre" class="form-control form-control-sm"
-                                   placeholder="Nombre" value="{{ old('nombre') }}" required
+                                   placeholder="Nombre" value="{{ $esEdicionConError ? '' : old('nombre') }}" required
                                    pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
                                    data-solo-letras>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small" for="nuevoApellido">Apellido *</label>
                             <input type="text" name="apellido" id="nuevoApellido" class="form-control form-control-sm"
-                                   placeholder="Apellido" value="{{ old('apellido') }}" required
+                                   placeholder="Apellido" value="{{ $esEdicionConError ? '' : old('apellido') }}" required
                                    pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
                                    data-solo-letras>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small" for="nuevoCedula">Cédula *</label>
                             <input type="number" name="cedula" id="nuevoCedula" class="form-control form-control-sm"
-                                   placeholder="Cédula" value="{{ old('cedula') }}" required min="1000000" max="99999999"
+                                   placeholder="Cédula" value="{{ $esEdicionConError ? '' : old('cedula') }}" required min="1000000" max="99999999"
                                    data-max-len="8">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small" for="nuevoEmail">Correo *</label>
                             <input type="email" name="email" id="nuevoEmail" class="form-control form-control-sm"
-                                   placeholder="correo@universidad.edu" value="{{ old('email') }}" required>
+                                   placeholder="correo@universidad.edu" value="{{ $esEdicionConError ? '' : old('email') }}" required>
                         </div>
                     </div>
                 </div>
@@ -78,7 +111,7 @@
                                 @endphp
                                 @foreach ($rolesLista as $rol)
                                     @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
-                                        <option value="{{ $rol->id }}" {{ old('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                                        <option value="{{ $rol->id }}" {{ !$esEdicionConError && old('rol_id') == $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
                                     @endif
                                 @endforeach
                             </select>
@@ -220,6 +253,9 @@
                 </thead>
                 <tbody>
                     @foreach ($usuarios as $u)
+                    @php
+                        $esFilaConError = $usuarioErrorId !== null && $usuarioErrorId === (int) $u->id;
+                    @endphp
                     <tr>
                         <td>{{ $u->id }}</td>
                         <td>{{ $u->nombre_completo }}</td>
@@ -242,8 +278,9 @@
                             @endif
                         </td>
                         <td>
-                            <a href="#" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
-                               data-bs-target="#edit-{{ $u->id }}" aria-label="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="#" class="btn btn-outline-primary btn-sm {{ $esFilaConError ? 'active' : '' }}" data-bs-toggle="collapse"
+                               data-bs-target="#edit-{{ $u->id }}" aria-label="Editar"
+                               aria-expanded="{{ $esFilaConError ? 'true' : 'false' }}"><i class="bi bi-pencil"></i></a>
                             @if ($u->id !== auth()->id())
                             <button type="button" class="btn btn-outline-danger btn-sm"
                                     data-bs-toggle="modal" data-bs-target="#deleteUserModal"
@@ -253,38 +290,56 @@
                             @endif
                         </td>
                     </tr>
-                    <tr class="collapse" id="edit-{{ $u->id }}">
+                    <tr class="{{ $esFilaConError ? 'collapse show' : 'collapse' }}" id="edit-{{ $u->id }}">
                         <td colspan="7" class="bg-light">
                             <form method="POST" action="{{ route('admin.usuarios.update', $u) }}" class="row g-2 p-2 align-items-end" data-validate>
                                 @csrf @method('PUT')
+                                {{-- Identifican la fila para reabrirla y repoblarla si la validación falla --}}
+                                <input type="hidden" name="_form" value="editar">
+                                <input type="hidden" name="usuario_id" value="{{ $u->id }}">
+                                <input type="hidden" name="usuario_nombre" value="{{ $u->nombre_completo }}">
+                                @if ($esFilaConError)
+                                    <div class="col-12">
+                                        <div class="alert alert-danger py-2 px-3 small mb-1" role="alert">
+                                            <strong class="d-block mb-1">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>No se guardaron los cambios. Corrige lo siguiente:
+                                            </strong>
+                                            <ul class="mb-0 ps-3">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                @endif
                                 <div class="col-md-2">
                                     <label class="form-label small text-muted" for="editNombre{{ $u->id }}">Nombre</label>
-                                    <input type="text" name="nombre" id="editNombre{{ $u->id }}" class="form-control form-control-sm"
-                                           value="{{ $u->nombre }}" required
+                                    <input type="text" name="nombre" id="editNombre{{ $u->id }}" class="form-control form-control-sm{{ $esFilaConError && $errors->has('nombre') ? ' is-invalid' : '' }}"
+                                           value="{{ $esFilaConError ? old('nombre', $u->nombre) : $u->nombre }}" required
                                            pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
                                            data-solo-letras>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small text-muted" for="editApellido{{ $u->id }}">Apellido</label>
-                                    <input type="text" name="apellido" id="editApellido{{ $u->id }}" class="form-control form-control-sm"
-                                           value="{{ $u->apellido }}" required
+                                    <input type="text" name="apellido" id="editApellido{{ $u->id }}" class="form-control form-control-sm{{ $esFilaConError && $errors->has('apellido') ? ' is-invalid' : '' }}"
+                                           value="{{ $esFilaConError ? old('apellido', $u->apellido) : $u->apellido }}" required
                                            pattern="[A-Za-záéíóúñÁÉÍÓÚÑ\s]+" title="Solo letras y espacios"
                                            data-solo-letras>
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label small text-muted" for="editCedula{{ $u->id }}">Cédula</label>
-                                    <input type="number" name="cedula" id="editCedula{{ $u->id }}" class="form-control form-control-sm"
-                                           value="{{ $u->cedula }}" required min="1000000" max="99999999"
+                                    <input type="number" name="cedula" id="editCedula{{ $u->id }}" class="form-control form-control-sm{{ $esFilaConError && $errors->has('cedula') ? ' is-invalid' : '' }}"
+                                           value="{{ $esFilaConError ? old('cedula', $u->cedula) : $u->cedula }}" required min="1000000" max="99999999"
                                            data-max-len="8">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small text-muted" for="editEmail{{ $u->id }}">Correo</label>
-                                    <input type="email" name="email" id="editEmail{{ $u->id }}" class="form-control form-control-sm"
-                                           value="{{ $u->email }}" required>
+                                    <input type="email" name="email" id="editEmail{{ $u->id }}" class="form-control form-control-sm{{ $esFilaConError && $errors->has('email') ? ' is-invalid' : '' }}"
+                                           value="{{ $esFilaConError ? old('email', $u->email) : $u->email }}" required>
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label small text-muted" for="editRol{{ $u->id }}">Rol</label>
-                                    <select name="rol_id" id="editRol{{ $u->id }}" class="form-select form-select-sm" required>
+                                    <select name="rol_id" id="editRol{{ $u->id }}" class="form-select form-select-sm{{ $esFilaConError && $errors->has('rol_id') ? ' is-invalid' : '' }}" required>
                                         @php
                                             $rolesListaEdit = $roles;
                                             if (!$rolesListaEdit->contains('id', 5)) {
@@ -293,7 +348,7 @@
                                         @endphp
                                         @foreach ($rolesListaEdit as $rol)
                                             @if ($rol->id !== 1 || auth()->user()->rol_id === 1)
-                                                <option value="{{ $rol->id }}" {{ $rol->id === $u->rol_id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
+                                                <option value="{{ $rol->id }}" {{ (int) ($esFilaConError ? old('rol_id', $u->rol_id) : $u->rol_id) === (int) $rol->id ? 'selected' : '' }}>{{ $rol->nombre }}</option>
                                             @endif
                                         @endforeach
                                     </select>
@@ -301,7 +356,7 @@
                                 <div class="col-md-2">
                                     <label class="form-label small text-muted" for="editPassword{{ $u->id }}">Nueva contraseña</label>
                                     <div class="pw-field-wrap">
-                                        <input type="password" name="password" id="editPassword{{ $u->id }}" class="form-control form-control-sm"
+                                        <input type="password" name="password" id="editPassword{{ $u->id }}" class="form-control form-control-sm{{ $esFilaConError && $errors->has('password') ? ' is-invalid' : '' }}"
                                                placeholder="Mín. 16 caracteres" minlength="16">
                                         <button class="pw-toggle-btn" type="button"
                                                 data-pw-toggle="editPassword{{ $u->id }}"
@@ -313,7 +368,7 @@
                                 <div class="col-md-2">
                                     <label class="form-label small text-muted" for="editPasswordConfirm{{ $u->id }}">Confirmar contraseña</label>
                                     <div class="pw-field-wrap">
-                                        <input type="password" name="password_confirmation" id="editPasswordConfirm{{ $u->id }}" class="form-control form-control-sm"
+                                        <input type="password" name="password_confirmation" id="editPasswordConfirm{{ $u->id }}" class="form-control form-control-sm{{ $esFilaConError && $errors->has('password') ? ' is-invalid' : '' }}"
                                                placeholder="Repetir contraseña" minlength="16">
                                         <button class="pw-toggle-btn" type="button"
                                                 data-pw-toggle="editPasswordConfirm{{ $u->id }}"
@@ -322,8 +377,13 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
-                                    <button type="submit" class="btn btn-primary btn-sm w-100">Guardar</button>
+                                <div class="col-md-2 d-flex gap-1">
+                                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Guardar</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            data-bs-toggle="collapse" data-bs-target="#edit-{{ $u->id }}"
+                                            title="Cerrar sin guardar" aria-label="Cerrar sin guardar">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
                                 </div>
                             </form>
                         </td>
@@ -371,6 +431,18 @@
 @push('scripts')
 <script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function() {
+        // Si la validación del servidor falló al editar una fila, esa fila
+        // llega abierta (collapse show). La centramos en pantalla y ponemos
+        // el foco en el primer campo marcado como inválido.
+        var filaError = document.querySelector('tr.collapse.show[id^="edit-"]');
+        if (filaError) {
+            filaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var campoInvalido = filaError.querySelector('.is-invalid');
+            if (campoInvalido) {
+                campoInvalido.focus({ preventScroll: true });
+            }
+        }
+
         document.querySelectorAll('[data-pw-toggle]').forEach(function(btn) {
             var input = document.getElementById(btn.getAttribute('data-pw-toggle'));
             if (!input) return;
