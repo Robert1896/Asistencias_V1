@@ -19,12 +19,13 @@
     "crons": [
         {
             "path": "/cron/mark-absents",
-            "schedule": "0 23 * * *"
+            "schedule": "0 3 * * *"
         }
     ],
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "false",
+        "APP_TIMEZONE": "America/Caracas",
         "LOG_CHANNEL": "stderr",
         "ASSET_URL": "/",
         "DB_CONNECTION": "mysql",

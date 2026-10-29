@@ -114,7 +114,9 @@ Archivos añadidos:
 4. Deploy y smoke test (login, estación, QR, reportes, cron).
 5. **Limitación conocida:** `FILESYSTEM_DISK=local` es efímero en Vercel → los archivos de justificación no persisten. Pendiente decidir S3-compatible (Cloudflare R2) para fase posterior.
 
-**Cron:** `app:mark-absents` está programado en `vercel.json` a `0 23 * * *` (UTC), el mismo instante que el `dailyAt('23:00')` original, ya que `APP_TIMEZONE` no está definido (Laravel usa UTC). Si se define `APP_TIMEZONE=America/Caracas`, cambiar el cron a `0 3 * * *`. Vercel Hobby admite crons 1 vez/día.
+**Cron:** `app:mark-absents` está programado en `vercel.json` a `0 3 * * *` (03:00 UTC = 23:00 en Caracas). Vercel Hobby admite crons 1 vez/día.
+
+**Zona horaria:** la app debe correr en `America/Caracas` (UTC-4, sin horario de verano). Antes producción corría en UTC y todas las horas quedaban +4 h (un escaneo a las 10:08 se guardaba como 14:08). `config/app.php` ahora usa `America/Caracas` como valor por defecto de `APP_TIMEZONE`, así que un despliegue sin la variable ya no queda en UTC. El bloque `env` de `vercel.json` está **deprecado** en el esquema actual de Vercel: para que la variable exista de verdad, definirla también en el dashboard (Settings → Environment Variables, en Production/Preview/Development) o con `vercel env add APP_TIMEZONE production`.
 
 ---
 

@@ -65,7 +65,9 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    // Venezuela no usa horario de verano: UTC-4 todo el año. El valor por
+    // defecto evita que un despliegue sin la variable quede en UTC (+4 h).
+    'timezone' => env('APP_TIMEZONE', 'America/Caracas'),
 
     /*
     |--------------------------------------------------------------------------
