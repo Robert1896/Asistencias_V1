@@ -18,14 +18,26 @@ use Illuminate\View\View;
 
 class DocenteHorarioController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $busqueda = trim((string) $request->input('busqueda'));
+
         $docentes = User::where('rol_id', 3)->where('estatus', 'activo')
+            ->when($busqueda !== '', function ($query) use ($busqueda) {
+                $escaped = escape_like($busqueda);
+
+                $query->where(function ($q) use ($escaped) {
+                    $q->where('nombre_completo', 'like', $escaped)
+                      ->orWhere('email', 'like', $escaped)
+                      ->orWhere('cedula', 'like', $escaped)
+                      ->orWhereHas('cargaAcademica', fn ($c) => $c->where('materia', 'like', $escaped));
+                });
+            })
             ->orderBy('nombre_completo')
             ->with(['horariosDocente', 'cargaAcademica'])
             ->get();
 
-        return view('admin.docente_horarios', compact('docentes'));
+        return view('admin.docente_horarios', compact('docentes', 'busqueda'));
     }
 
     public function edit(User $user): View
