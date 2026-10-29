@@ -237,8 +237,9 @@ class EstacionController extends Controller
         $hoy = today()->toDateString();
         $horaAhora = now()->format('H:i:s');
         $bloqueActual = $user->obtenerSesionActiva($hoy, $horaAhora);
+        $explicacion  = $bloqueActual ? null : $user->explicarSinSesionActiva($hoy, $horaAhora);
 
-        return view('empleado.escanear_salon', compact('user', 'bloqueActual'));
+        return view('empleado.escanear_salon', compact('user', 'bloqueActual', 'explicacion'));
     }
 
     public function procesarSalonQr(Request $request): JsonResponse

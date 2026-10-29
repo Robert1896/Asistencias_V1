@@ -268,6 +268,77 @@ class User extends Authenticatable
         return null;
     }
 
+    /**
+     * Explica por qué no hay sesión activa. Evita el mensaje genérico
+     * "no tiene bloques asignados" cuando en realidad la clase ya terminó,
+     * todavía no empieza o el docente solo tiene bloques en otro día.
+     *
+     * @return array{titulo: string, mensaje: string, caso: string, contexto: array}
+     */
+    public function explicarSinSesionActiva(string $fecha, string $hora): array
+    {
+        $diaIso   = Carbon::parse($fecha)->dayOfWeekIso;
+        $sesiones = $this->obtenerSesionesDelDia($fecha);
+        $rango    = fn (array $s) => substr($s['hora_inicio'], 0, 5) . ' – ' . substr($s['hora_fin'], 0, 5);
+
+        $contexto = [
+            'hora_servidor' => $hora,
+            'fecha'         => $fecha,
+            'dia'           => Horario::DIAS[$diaIso] ?? (string) $diaIso,
+            'sesiones_hoy'  => array_map($rango, $sesiones),
+        ];
+
+        if ($sesiones === []) {
+            $dias = $this->horariosDocente()
+                ->pluck('horarios.dia_semana')
+                ->unique()
+                ->sort()
+                ->values();
+
+            $contexto['dias_con_bloques'] = $dias
+                ->map(fn ($d) => Horario::DIAS[(int) $d] ?? (string) $d)
+                ->all();
+
+            if ($dias->isNotEmpty()) {
+                return [
+                    'titulo'   => 'Hoy no tiene bloques',
+                    'mensaje'  => "Hoy es {$contexto['dia']} y no tiene bloques asignados. Sus bloques están en: "
+                        . implode(', ', $contexto['dias_con_bloques']) . '.',
+                    'caso'     => 'otro_dia',
+                    'contexto' => $contexto,
+                ];
+            }
+
+            return [
+                'titulo'   => 'Sin bloques asignados',
+                'mensaje'  => 'No tiene bloques horarios asignados. Asígnelos en Horarios del Personal Docente.',
+                'caso'     => 'sin_asignaciones',
+                'contexto' => $contexto,
+            ];
+        }
+
+        $ultima = $sesiones[count($sesiones) - 1];
+
+        foreach ($sesiones as $sesion) {
+            if ($hora < $sesion['hora_inicio']) {
+                return [
+                    'titulo'   => 'Fuera de bloque',
+                    'mensaje'  => 'No hay bloque activo. Su próxima clase inicia a las '
+                        . substr($sesion['hora_inicio'], 0, 5) . '.',
+                    'caso'     => 'proxima',
+                    'contexto' => $contexto,
+                ];
+            }
+        }
+
+        return [
+            'titulo'   => 'Bloque ya finalizado',
+            'mensaje'  => 'Su bloque de las ' . $rango($ultima) . " ya finalizó (hora del servidor: {$hora}).",
+            'caso'     => 'finalizadas',
+            'contexto' => $contexto,
+        ];
+    }
+
     public function obtenerBloqueActivoEnSalon(string $fecha, string $hora, int $salonId): ?array
     {
         $diaSemana = Carbon::parse($fecha)->dayOfWeekIso;

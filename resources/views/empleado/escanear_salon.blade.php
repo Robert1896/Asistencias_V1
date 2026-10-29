@@ -33,13 +33,20 @@
                         <div class="d-flex align-items-center">
                             <i class="bi bi-exclamation-triangle fs-4 text-warning me-3"></i>
                             <div>
-                                <small class="text-muted">Sin bloques horarios asignados</small>
-                                <div class="fw-bold text-warning">Puede escanear el QR del salón de asistencia especial (ADHOC-001)</div>
-                                <small class="text-muted">Se registrará como asistencia especial.</small>
+                                <small class="text-muted">{{ $explicacion['titulo'] ?? 'Sin bloque activo' }}</small>
+                                <div class="fw-bold text-warning">{{ $explicacion['mensaje'] ?? 'No tiene un bloque horario activo en este momento.' }}</div>
+                                @if (!empty($explicacion['contexto']['sesiones_hoy']))
+                                    <small class="text-muted">Bloques de hoy: {{ implode(', ', $explicacion['contexto']['sesiones_hoy']) }}</small><br>
+                                @endif
+                                <small class="text-muted">También puede escanear el QR del salón de asistencia especial (ADHOC-001).</small>
                             </div>
                         </div>
                     </div>
                 @endif
+
+                <small class="text-muted d-block mt-2">
+                    Hora del servidor: {{ now()->format('H:i:s') }} · {{ ucfirst(now()->locale('es')->dayName) }} {{ now()->format('d/m/Y') }}
+                </small>
             </div>
         </div>
 
@@ -123,7 +130,7 @@
             actualizarUI(false);
             var isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
             if (!isSecure) {
-                mostrarEstado('Cámara bloqueada. Acceda por <strong>https://localhost/asistencias_v1/public</strong> para habilitar la cámara.', 'danger');
+                mostrarEstado('Cámara bloqueada. Acceda por https://localhost/asistencias_v1/public para habilitar la cámara.', 'danger');
             } else {
                 mostrarEstado('Error al acceder a la cámara. Verifique los permisos del navegador.', 'danger');
             }
@@ -166,7 +173,7 @@
             } else {
                 sonidoError.play().catch(function(){});
                 mostrarAlerta('error', data.mensaje);
-                mostrarEstado(data.mensaje, 'danger');
+                mostrarEstado(data.mensaje, 'danger', data.diagnostico);
             }
         })
         .catch(function() { mostrarAlerta('error', 'Error de conexión'); mostrarEstado('Error de conexión', 'danger'); })
@@ -179,10 +186,39 @@
             color: '#fff', iconColor: '#fff' });
     }
 
-    function mostrarEstado(texto, tipo) {
+    function mostrarEstado(texto, tipo, diagnostico) {
         var bg = { success: 'bg-success text-white', danger: 'bg-danger text-white', info: 'bg-info text-white', warning: 'bg-warning text-dark' }[tipo] || 'bg-light text-muted';
         estadoActual.className = 'estado-indicador ' + bg;
-        estadoActual.innerHTML = '<span class="fw-bold small px-2">' + texto + '</span>';
+        while (estadoActual.firstChild) estadoActual.removeChild(estadoActual.firstChild);
+
+        var caja = document.createElement('div');
+        caja.className = 'text-center w-100 px-2';
+
+        var principal = document.createElement('span');
+        principal.className = 'fw-bold small d-block';
+        principal.textContent = texto;
+        caja.appendChild(principal);
+
+        if (diagnostico && diagnostico.hora_servidor) {
+            var partes = ['Hora del servidor: ' + diagnostico.hora_servidor];
+            if (diagnostico.dia) partes.push(diagnostico.dia + ' ' + (diagnostico.fecha || ''));
+            if (diagnostico.sesiones_hoy && diagnostico.sesiones_hoy.length) {
+                partes.push('Bloques de hoy: ' + diagnostico.sesiones_hoy.join(', '));
+            } else {
+                partes.push('Sin bloques hoy');
+            }
+            if (diagnostico.dias_con_bloques && diagnostico.dias_con_bloques.length) {
+                partes.push('Días con bloques: ' + diagnostico.dias_con_bloques.join(', '));
+            }
+
+            var detalle = document.createElement('span');
+            detalle.className = 'small d-block mt-1';
+            detalle.style.opacity = '0.9';
+            detalle.textContent = partes.join(' · ');
+            caja.appendChild(detalle);
+        }
+
+        estadoActual.appendChild(caja);
     }
 
     btnToggle.addEventListener('click', toggleCamara);

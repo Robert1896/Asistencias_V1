@@ -145,18 +145,24 @@ class AttendanceService
                 }
 
                 if ($proxima) {
-                    $horaInicio = substr($proxima['hora_inicio'], 0, 5);
+                    $horaInicio  = substr($proxima['hora_inicio'], 0, 5);
+                    $explicacion = $usuario->explicarSinSesionActiva($hoy, $horaAhora);
+
                     return [
-                        'ok'      => false,
-                        'mensaje' => "No tiene bloque activo en este salón. Su próxima clase inicia a las {$horaInicio}.",
-                        'tipo'    => 'info',
+                        'ok'          => false,
+                        'mensaje'     => "No tiene bloque activo en este salón. Su próxima clase inicia a las {$horaInicio}.",
+                        'tipo'        => 'info',
+                        'diagnostico' => $explicacion['contexto'],
                     ];
                 }
 
+                $explicacion = $usuario->explicarSinSesionActiva($hoy, $horaAhora);
+
                 return [
-                    'ok'      => false,
-                    'mensaje' => 'No tiene bloques horarios asignados para hoy.',
-                    'tipo'    => 'error',
+                    'ok'          => false,
+                    'mensaje'     => $explicacion['mensaje'],
+                    'tipo'        => 'error',
+                    'diagnostico' => $explicacion['contexto'],
                 ];
             }
         }
@@ -264,18 +270,24 @@ class AttendanceService
             }
 
             if ($proximaSesion) {
-                $horaInicio = substr($proximaSesion['hora_inicio'], 0, 5);
+                $horaInicio  = substr($proximaSesion['hora_inicio'], 0, 5);
+                $explicacion = $usuario->explicarSinSesionActiva($hoy, $horaAhora);
+
                 return [
-                    'ok'      => false,
-                    'mensaje' => "No hay bloque activo. Su próxima clase inicia a las {$horaInicio}.",
-                    'tipo'    => 'info',
+                    'ok'          => false,
+                    'mensaje'     => "No hay bloque activo. Su próxima clase inicia a las {$horaInicio}.",
+                    'tipo'        => 'info',
+                    'diagnostico' => $explicacion['contexto'],
                 ];
             }
 
+            $explicacion = $usuario->explicarSinSesionActiva($hoy, $horaAhora);
+
             return [
-                'ok'      => false,
-                'mensaje' => 'No tiene bloques horarios asignados para hoy.',
-                'tipo'    => 'error',
+                'ok'          => false,
+                'mensaje'     => $explicacion['mensaje'],
+                'tipo'        => 'error',
+                'diagnostico' => $explicacion['contexto'],
             ];
         }
 
