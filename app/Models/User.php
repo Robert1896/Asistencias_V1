@@ -220,31 +220,41 @@ class User extends Authenticatable
         $sesionActual = null;
 
         foreach ($bloques as $bloque) {
-            if ($sesionActual === null) {
-                $sesionActual = [
-                    'horario_id_inicio' => $bloque->id,
-                    'hora_inicio'       => $bloque->hora_inicio,
-                    'hora_fin'          => $bloque->hora_fin,
-                    'salon_id'          => $bloque->pivot->salon_id,
-                    'bloques'           => collect([$bloque]),
-                ];
-            } else {
-                $anterior = $sesionActual['bloques']->last();
+            $datos = [
+                'horario_id_inicio'  => $bloque->id,
+                'hora_inicio'        => $bloque->hora_inicio,
+                'hora_fin'           => $bloque->hora_fin,
+                'salon_id'           => $bloque->pivot->salon_id,
+                'seccion'            => $bloque->pivot->seccion,
+                'carga_academica_id' => $bloque->pivot->carga_academica_id,
+                'tipo_actividad'     => $bloque->pivot->tipo_actividad,
+                'bloques'            => collect([$bloque]),
+            ];
 
-                if ($anterior->hora_fin === $bloque->hora_inicio
-                    && $sesionActual['salon_id'] === $bloque->pivot->salon_id) {
-                    $sesionActual['hora_fin'] = $bloque->hora_fin;
-                    $sesionActual['bloques']->push($bloque);
-                } else {
-                    $sesiones[] = $sesionActual;
-                    $sesionActual = [
-                        'horario_id_inicio' => $bloque->id,
-                        'hora_inicio'       => $bloque->hora_inicio,
-                        'hora_fin'          => $bloque->hora_fin,
-                        'salon_id'          => $bloque->pivot->salon_id,
-                        'bloques'           => collect([$bloque]),
-                    ];
-                }
+            if ($sesionActual === null) {
+                $sesionActual = $datos;
+                continue;
+            }
+
+            $anterior = $sesionActual['bloques']->last();
+
+            // Una clase puede ocupar varios bloques consecutivos (por ejemplo,
+            // 2 horas académicas = dos bloques de 45 min). Solo se unen si son
+            // contiguos y pertenecen a la misma materia, sección, salón y tipo.
+            $contiguos = Horario::normalizarHora($anterior->hora_fin)
+                === Horario::normalizarHora($bloque->hora_inicio);
+
+            $mismaClase = (int) $sesionActual['salon_id'] === (int) $bloque->pivot->salon_id
+                && (string) $sesionActual['seccion'] === (string) $bloque->pivot->seccion
+                && (int) $sesionActual['carga_academica_id'] === (int) $bloque->pivot->carga_academica_id
+                && (string) $sesionActual['tipo_actividad'] === (string) $bloque->pivot->tipo_actividad;
+
+            if ($contiguos && $mismaClase) {
+                $sesionActual['hora_fin'] = $bloque->hora_fin;
+                $sesionActual['bloques']->push($bloque);
+            } else {
+                $sesiones[] = $sesionActual;
+                $sesionActual = $datos;
             }
         }
 
@@ -260,6 +270,26 @@ class User extends Authenticatable
         $sesiones = $this->obtenerSesionesDelDia($fecha);
 
         foreach ($sesiones as $sesion) {
+            if ($hora >= $sesion['hora_inicio'] && $hora < $sesion['hora_fin']) {
+                return $sesion;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Clase (sesión) activa que corresponde al salón escaneado. Si la clase
+     * dura dos o más bloques consecutivos, se devuelve completa para que la
+     * asistencia se registre una sola vez en todo el rango.
+     */
+    public function obtenerSesionActivaEnSalon(string $fecha, string $hora, int $salonId): ?array
+    {
+        foreach ($this->obtenerSesionesDelDia($fecha) as $sesion) {
+            if ((int) $sesion['salon_id'] !== $salonId) {
+                continue;
+            }
+
             if ($hora >= $sesion['hora_inicio'] && $hora < $sesion['hora_fin']) {
                 return $sesion;
             }

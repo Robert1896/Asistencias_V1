@@ -103,7 +103,7 @@ class MarkAbsents extends Command
 
             $yaRegistro = Asistencia::where('usuario_id', $user->id)
                 ->where('fecha', $fechaStr)
-                ->where('horario_id', $horarioIdInicio)
+                ->whereIn('horario_id', collect($sesion['bloques'])->pluck('id')->all())
                 ->exists();
 
             if ($yaRegistro) {

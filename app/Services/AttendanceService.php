@@ -111,11 +111,14 @@ class AttendanceService
 
         $esSalonEspecial = in_array(strtoupper((string) $salon->codigo), ['ADHOC-001', 'ESPECIAL'], true);
 
-        $bloque = $usuario->obtenerBloqueActivoEnSalon($hoy, $horaAhora, $salon->id);
+        // Una clase puede ocupar varios bloques consecutivos (por ejemplo,
+        // 2 horas académicas = dos bloques). Se resuelve la clase completa
+        // para registrarla una sola vez en todo su rango.
+        $sesion = $usuario->obtenerSesionActivaEnSalon($hoy, $horaAhora, $salon->id);
 
         $sinAsignacion = false;
 
-        if (!$bloque) {
+        if (!$sesion) {
             if ((int) $usuario->rol_id === 3 && $esSalonEspecial) {
                 $departamento = Departamento::where('codigo', 'INFO')->first();
                 if ($departamento) {
@@ -128,12 +131,7 @@ class AttendanceService
             $sinAsignacion = true;
 
             if ($sesionActiva) {
-                $bloque = [
-                    'horario_id'  => $sesionActiva['horario_id_inicio'],
-                    'hora_inicio' => $sesionActiva['hora_inicio'],
-                    'hora_fin'    => $sesionActiva['hora_fin'],
-                    'salon_id'    => $salon->id,
-                ];
+                $sesion = $sesionActiva;
             } else {
                 $todasLasSesiones = $usuario->obtenerSesionesDelDia($hoy);
                 $proxima = null;
@@ -167,21 +165,32 @@ class AttendanceService
             }
         }
 
-        $horarioId = $bloque['horario_id'];
+        $bloque = [
+            'horario_id'  => $sesion['horario_id_inicio'],
+            'hora_inicio' => $sesion['hora_inicio'],
+            'hora_fin'    => $sesion['hora_fin'],
+        ];
 
+        $bloqueTexto = substr($bloque['hora_inicio'], 0, 5) . ' – ' . substr($bloque['hora_fin'], 0, 5);
+
+        $horarioId    = $bloque['horario_id'];
+        $bloquesClase = $sesion['bloques']->pluck('id')->all();
+
+        // Idempotencia por clase: cualquier bloque de la misma clase cuenta.
+        // Así el segundo escaneo (otra hora académica) no duplica el registro.
         $yaRegistro = Asistencia::where('usuario_id', $usuario->id)
             ->where('fecha', $hoy)
-            ->where('horario_id', $horarioId)
+            ->whereIn('horario_id', $bloquesClase)
             ->first();
 
         if ($yaRegistro) {
             return [
                 'ok'      => true,
-                'mensaje' => "{$usuario->nombre_completo} ya registró asistencia para este bloque.",
+                'mensaje' => "{$usuario->nombre_completo} ya registró asistencia para esta clase ({$bloqueTexto}).",
                 'tipo'    => 'info',
                 'nombre'  => $usuario->nombre_completo,
                 'rol'     => $usuario->rol->nombre,
-                'bloque'  => substr($bloque['hora_inicio'], 0, 5) . ' – ' . substr($bloque['hora_fin'], 0, 5),
+                'bloque'  => $bloqueTexto,
             ];
         }
 
@@ -216,8 +225,6 @@ class AttendanceService
             $usuario->notify(new AsistenciaNotificacion('tarde', $hoy, $horaAhora, 'Tarde'));
         }
 
-        $bloqueTexto = substr($bloque['hora_inicio'], 0, 5) . ' – ' . substr($bloque['hora_fin'], 0, 5);
-
         $mensajeExtra = $sinAsignacion
             ? " (Sin asignación registrada en este salón)"
             : '';
@@ -226,7 +233,7 @@ class AttendanceService
 
         return [
             'ok'      => true,
-            'mensaje' => "{$usuario->nombre_completo} — Asistencia registrada [Bloque {$bloqueTexto}]{$mensajeEstado}{$mensajeExtra}",
+            'mensaje' => "{$usuario->nombre_completo} — Asistencia registrada [Clase {$bloqueTexto}]{$mensajeEstado}{$mensajeExtra}",
             'tipo'    => $estado === 'Tarde' ? 'warning' : ($sinAsignacion ? 'info' : 'success'),
             'nombre'  => $usuario->nombre_completo,
             'rol'     => $usuario->rol->nombre,
@@ -295,7 +302,7 @@ class AttendanceService
 
         $asistencia = Asistencia::where('usuario_id', $usuario->id)
             ->where('fecha', $hoy)
-            ->where('horario_id', $bloqueInicio)
+            ->whereIn('horario_id', $sesion['bloques']->pluck('id')->all())
             ->first();
 
         if (!$asistencia) {
@@ -329,8 +336,8 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
 
             $bloqueTexto = substr($sesion['hora_inicio'], 0, 5) . ' – ' . substr($sesion['hora_fin'], 0, 5);
             $mensajeBase = $estado === 'Tarde'
-                ? "Bienvenido {$usuario->nombre_completo} — Entrada registrada (Tarde) [Bloque {$bloqueTexto}]"
-                : "Bienvenido {$usuario->nombre_completo} — Entrada registrada [Bloque {$bloqueTexto}]";
+                ? "Bienvenido {$usuario->nombre_completo} — Entrada registrada (Tarde) [Clase {$bloqueTexto}]"
+                : "Bienvenido {$usuario->nombre_completo} — Entrada registrada [Clase {$bloqueTexto}]";
 
             return [
                 'ok'           => true,
@@ -359,7 +366,7 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
 
             return [
                 'ok'      => true,
-                'mensaje' => "Hasta luego {$usuario->nombre_completo} — Salida registrada [Bloque {$bloqueTexto}]",
+                'mensaje' => "Hasta luego {$usuario->nombre_completo} — Salida registrada [Clase {$bloqueTexto}]",
                 'tipo'    => 'success',
                 'nombre'  => $usuario->nombre_completo,
                 'rol'     => $usuario->rol->nombre,
@@ -374,7 +381,7 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
 
         return [
             'ok'      => true,
-            'mensaje' => "{$usuario->nombre_completo} ya registró entrada y salida para el bloque {$bloqueTexto}.",
+            'mensaje' => "{$usuario->nombre_completo} ya registró entrada y salida para la clase {$bloqueTexto}.",
             'tipo'    => 'info',
             'nombre'  => $usuario->nombre_completo,
             'rol'     => $usuario->rol->nombre,
@@ -468,11 +475,11 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
             $bloqueInicio = $sesion['horario_id_inicio'];
             $yaRegistro = Asistencia::where('usuario_id', $empleado->id)
                 ->where('fecha', $hoy)
-                ->where('horario_id', $bloqueInicio)
+                ->whereIn('horario_id', $sesion['bloques']->pluck('id')->all())
                 ->first();
 
             if ($yaRegistro) {
-                return $this->resultado(false, "{$empleado->nombre_completo} ya tiene asistencia registrada para este bloque.", 'info');
+                return $this->resultado(false, "{$empleado->nombre_completo} ya tiene asistencia registrada para esta clase.", 'info');
             }
 
             $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
@@ -498,7 +505,7 @@ $estado = EstadoAsistencia::desdeLimite($horaAhora, $sesion['hora_inicio']);
             $bloqueTexto = substr($sesion['hora_inicio'], 0, 5) . ' – ' . substr($sesion['hora_fin'], 0, 5);
             $msgEstado = $estado === 'Tarde' ? ' (Tarde)' : '';
 
-            return $this->resultado(true, "{$empleado->nombre_completo} — Entrada manual registrada [Bloque {$bloqueTexto}]{$msgEstado}", $estado === 'Tarde' ? 'warning' : 'success', $empleado, 'entrada', $horaAhora, $estado);
+            return $this->resultado(true, "{$empleado->nombre_completo} — Entrada manual registrada [Clase {$bloqueTexto}]{$msgEstado}", $estado === 'Tarde' ? 'warning' : 'success', $empleado, 'entrada', $horaAhora, $estado);
         }
 
         if ($tipo === 'salida') {

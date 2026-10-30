@@ -23,8 +23,12 @@
                         <div class="d-flex align-items-center">
                             <i class="bi bi-clock-history fs-4 text-primary me-3"></i>
                             <div>
-                                <small class="text-muted">Bloque actual</small>
+                                <small class="text-muted">Clase actual</small>
                                 <div class="fw-bold">{{ substr($bloqueActual['hora_inicio'], 0, 5) }} – {{ substr($bloqueActual['hora_fin'], 0, 5) }}</div>
+                                @php $numBloques = $bloqueActual['bloques']->count(); @endphp
+                                @if ($numBloques > 1)
+                                    <small class="text-muted">{{ $numBloques }} bloques consecutivos · se registra una sola vez</small>
+                                @endif
                             </div>
                         </div>
                     </div>
