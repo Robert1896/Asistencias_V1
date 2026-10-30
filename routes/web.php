@@ -6,8 +6,8 @@ use App\Http\Controllers\Admin\CargaAcademicaController;
 use App\Http\Controllers\Admin\CorreoConfigController;
 use App\Http\Controllers\Admin\DocenteHorarioController;
 use App\Http\Controllers\Admin\EstacionCentralController;
-use App\Http\Controllers\Admin\HorarioController;
 use App\Http\Controllers\Admin\FeriadoController;
+use App\Http\Controllers\Admin\HorarioController;
 use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\Admin\RolController;
 use App\Http\Controllers\Admin\SalonController;
@@ -26,15 +26,15 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::middleware(['guest', 'no-cache'])->group(function () {
-    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [LoginController::class, 'login']);
-    Route::get('forgot-password', [LoginController::class, 'showForgotForm'])->name('password.request');
+    Route::get('login', [LoginController::class, 'showLoginForm'])->middleware('throttle:publico')->name('login');
+    Route::post('login', [LoginController::class, 'login'])->middleware('throttle:60,1');
+    Route::get('forgot-password', [LoginController::class, 'showForgotForm'])->middleware('throttle:publico')->name('password.request');
     Route::post('forgot-password', [LoginController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('password.email');
     Route::get('reset-password/{token}', [LoginController::class, 'showResetForm'])->name('password.reset');
     Route::post('reset-password', [LoginController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
 
     // Verificación en dos pasos (#15)
-    Route::get('login/verificar', [LoginController::class, 'showTwoFactorForm'])->name('login.twofactor');
+    Route::get('login/verificar', [LoginController::class, 'showTwoFactorForm'])->middleware('throttle:publico')->name('login.twofactor');
     Route::post('login/verificar', [LoginController::class, 'verifyTwoFactor'])->middleware('throttle:10,1');
     Route::post('login/verificar/reenviar', [LoginController::class, 'resendTwoFactor'])->middleware('throttle:5,1')->name('login.twofactor.resend');
     Route::post('login/verificar/cancelar', [LoginController::class, 'cancelTwoFactor'])->name('login.twofactor.cancel');
@@ -65,8 +65,8 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
     // Justificaciones del empleado
     Route::get('mis-justificaciones', [JustificacionController::class, 'index'])->name('justificaciones');
-    Route::post('justificar/{asistencia}', [JustificacionController::class, 'solicitar'])->name('justificaciones.solicitar');
-    Route::get('justificaciones/archivo/{asistencia}', [JustificacionController::class, 'archivo'])->name('justificaciones.archivo');
+    Route::post('justificar/{asistencia}', [JustificacionController::class, 'solicitar'])->middleware('throttle:10,1')->name('justificaciones.solicitar');
+    Route::get('justificaciones/archivo/{asistencia}', [JustificacionController::class, 'archivo'])->middleware('throttle:publico')->name('justificaciones.archivo');
 
     // Estación de chequeo (sujeta a verificación de estación central)
     Route::middleware('can:estacion_operar')->group(function () {
@@ -84,9 +84,9 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     Route::post('estacion/salon-qr', [EstacionController::class, 'procesarSalonQr'])->name('estacion.salon-qr')->middleware('throttle:60,1');
 
     // Panel del docente
-    Route::get('mi-dashboard', [\App\Http\Controllers\Empleado\DashboardController::class, 'index'])->name('empleado.dashboard');
-    Route::get('mi-horario', [\App\Http\Controllers\Empleado\DashboardController::class, 'horario'])->name('empleado.horario');
-    Route::get('mi-estadisticas', [\App\Http\Controllers\Empleado\DashboardController::class, 'estadisticas'])->name('empleado.estadisticas');
+    Route::get('mi-dashboard', [App\Http\Controllers\Empleado\DashboardController::class, 'index'])->name('empleado.dashboard');
+    Route::get('mi-horario', [App\Http\Controllers\Empleado\DashboardController::class, 'horario'])->name('empleado.horario');
+    Route::get('mi-estadisticas', [App\Http\Controllers\Empleado\DashboardController::class, 'estadisticas'])->name('empleado.estadisticas');
 
     // ─── Administración ─────────────────────────────────────────────
     // Usuarios: llave maestra usuarios_ver + permiso específico anidado
@@ -121,24 +121,24 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
 
         // Reportes
         Route::get('reportes', [ReporteController::class, 'index'])->name('admin.reportes')->middleware('can:reportes_ver');
-        Route::get('reportes/exportar', [ReporteController::class, 'exportar'])->name('admin.reportes.exportar')->middleware('can:reportes_ver');
+        Route::get('reportes/exportar', [ReporteController::class, 'exportar'])->name('admin.reportes.exportar')->middleware(['can:reportes_ver', 'throttle:exportaciones']);
         Route::get('reportes/empleado/{empleado}', [ReporteController::class, 'empleado'])->name('admin.reportes.empleado')->middleware('can:reportes_ver');
-        Route::get('reportes/empleado/{empleado}/exportar', [ReporteController::class, 'empleadoExportar'])->name('admin.reportes.empleado.exportar')->middleware('can:reportes_ver');
+        Route::get('reportes/empleado/{empleado}/exportar', [ReporteController::class, 'empleadoExportar'])->name('admin.reportes.empleado.exportar')->middleware(['can:reportes_ver', 'throttle:exportaciones']);
 
         // Salones (CRUD + utilidades)
         Route::get('salones', [SalonController::class, 'index'])->name('admin.salones.index')->middleware('can:salones_ver');
         Route::post('salones', [SalonController::class, 'store'])->name('admin.salones.store')->middleware('can:salones_crear');
         Route::put('salones/{salon}', [SalonController::class, 'update'])->name('admin.salones.update')->middleware('can:salones_editar');
         Route::delete('salones/{salon}', [SalonController::class, 'destroy'])->name('admin.salones.destroy')->middleware('can:salones_eliminar');
-        Route::get('salones/{salon}/qr', [SalonController::class, 'qrCode'])->name('admin.salones.qr')->middleware('can:salones_ver');
-        Route::post('salones/{salon}/qr/regenerar', [SalonController::class, 'regenerarQr'])->name('admin.salones.qr.regenerar')->middleware('can:salones_editar');
-        Route::get('salones/{salon}/exportar', [SalonController::class, 'exportar'])->name('admin.salones.exportar')->middleware('can:salones_ver');
+        Route::get('salones/{salon}/qr', [SalonController::class, 'qrCode'])->name('admin.salones.qr')->middleware(['can:salones_ver', 'throttle:publico']);
+        Route::post('salones/{salon}/qr/regenerar', [SalonController::class, 'regenerarQr'])->name('admin.salones.qr.regenerar')->middleware(['can:salones_editar', 'throttle:10,1']);
+        Route::get('salones/{salon}/exportar', [SalonController::class, 'exportar'])->name('admin.salones.exportar')->middleware(['can:salones_ver', 'throttle:exportaciones']);
         Route::post('salones/disponibilidad', [SalonController::class, 'disponibilidad'])->name('admin.salones.disponibilidad')->middleware('can:salones_ver');
         Route::delete('salones/asignaciones/limpiar', [SalonController::class, 'limpiarAsignaciones'])
             ->middleware(['can:salones_eliminar', 'throttle:5,60'])
             ->name('admin.salones.limpiar');
         Route::post('salones/importar', [SalonController::class, 'importar'])->name('admin.salones.importar')->middleware(['can:salones_editar', 'throttle:10,1']);
-        Route::get('salones/plantilla', [SalonController::class, 'plantilla'])->name('admin.salones.plantilla')->middleware('can:salones_ver');
+        Route::get('salones/plantilla', [SalonController::class, 'plantilla'])->name('admin.salones.plantilla')->middleware(['can:salones_ver', 'throttle:exportaciones']);
         Route::get('salones/ocupacion', [SalonController::class, 'ocupacion'])->name('admin.salones.ocupacion')->middleware('can:salones_ver');
         Route::post('salones/ocupacion/data', [SalonController::class, 'ocupacionData'])->name('admin.salones.ocupacion.data')->middleware('can:salones_ver');
 
@@ -171,8 +171,8 @@ Route::middleware(['auth', 'no-cache'])->group(function () {
     });
 
     // QR (sin permiso específico, cualquier autenticado lo ve)
-    Route::get('mi-qr-dinamico', [QrController::class, 'showPage'])->name('qr.dinamico.page');
-    Route::get('qr/{user}', [QrController::class, 'show'])->name('qr.show');
-    Route::get('qr/{user}/dinamico', [QrController::class, 'qrDinamico'])->name('qr.dinamico');
+    Route::get('mi-qr-dinamico', [QrController::class, 'showPage'])->name('qr.dinamico.page')->middleware('throttle:publico');
+    Route::get('qr/{user}', [QrController::class, 'show'])->name('qr.show')->middleware('throttle:publico');
+    Route::get('qr/{user}/dinamico', [QrController::class, 'qrDinamico'])->name('qr.dinamico')->middleware('throttle:publico');
     Route::post('qr/{user}/token', [QrController::class, 'generarToken'])->name('qr.token')->middleware('throttle:30,1');
 });

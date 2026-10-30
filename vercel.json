@@ -10,6 +10,17 @@
             "maxDuration": 60
         }
     },
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Robots-Tag",
+                    "value": "noindex, nofollow"
+                }
+            ]
+        }
+    ],
     "rewrites": [
         {
             "source": "/(.*)",
@@ -20,6 +31,10 @@
         {
             "path": "/cron/mark-absents",
             "schedule": "0 3 * * *"
+        },
+        {
+            "path": "/cron/prune",
+            "schedule": "30 3 * * *"
         }
     ],
     "env": {
@@ -31,12 +46,15 @@
         "DB_CONNECTION": "mysql",
         "DB_PORT": "4000",
         "DB_COLLATION": "utf8mb4_general_ci",
+        "DB_CONNECT_TIMEOUT": "5",
+        "APP_DB_BOOTSTRAP_CHECKS": "false",
         "SESSION_DRIVER": "database",
         "SESSION_ENCRYPT": "true",
         "SESSION_SECURE_COOKIE": "true",
         "SESSION_ABSOLUTE_TIMEOUT": "480",
         "CACHE_STORE": "database",
         "QUEUE_CONNECTION": "sync",
+        "MAIL_TIMEOUT": "5",
         "VIEW_COMPILED_PATH": "/tmp/views",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",

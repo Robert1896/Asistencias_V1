@@ -132,6 +132,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Consultas de arranque (proteccion ante picos de trafico)
+    |--------------------------------------------------------------------------
+    |
+    | En produccion se desactivan las comprobaciones de esquema que corrian en
+    | cada request (rate limiter y cache). Las tablas ya existen tras el primer
+    | despliegue; si se recrea la base, activar APP_DB_BOOTSTRAP_CHECKS=true
+    | durante un despliegue para que se autocreen.
+    |
+    */
+
+    'db_bootstrap_checks' => env('APP_DB_BOOTSTRAP_CHECKS', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuracion SMTP desde base de datos
+    |--------------------------------------------------------------------------
+    |
+    | Si se desactiva, el correo usa exclusivamente las variables MAIL_* del
+    | entorno. Se mantiene activo porque el administrador edita el SMTP desde
+    | la interfaz; ahora cuesta una sola consulta por request.
+    |
+    */
+
+    'mail_from_db' => env('APP_MAIL_FROM_DB', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |

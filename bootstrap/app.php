@@ -7,10 +7,15 @@ use App\Http\Middleware\RegistrarAccesoDenegado;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SesionAbsoluta;
 use App\Http\Middleware\VerificarEstacionCentral;
+use App\Http\Middleware\VerificarEstatusActivo;
 use App\Http\Middleware\W3cCompliance;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
@@ -21,34 +26,45 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            $cronSecret = function (\Illuminate\Http\Request $request): void {
+            $cronSecret = function (Request $request): void {
                 $secret = (string) config('app.cron_secret');
                 abort_if($secret === '' || ! hash_equals($secret, (string) $request->bearerToken()), 401);
             };
 
-            Route::get('cron/mark-absents', function (\Illuminate\Http\Request $request) use ($cronSecret) {
+            Route::get('cron/mark-absents', function (Request $request) use ($cronSecret) {
                 $cronSecret($request);
 
-                \Illuminate\Support\Facades\Artisan::call('app:mark-absents');
+                Artisan::call('app:mark-absents');
 
                 return response()->json([
-                    'ok'     => true,
-                    'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+                    'ok' => true,
+                    'output' => trim(Artisan::output()),
                 ]);
             })->name('cron.mark-absents');
 
-            Route::get('cron/migrate', function (\Illuminate\Http\Request $request) use ($cronSecret) {
+            Route::get('cron/migrate', function (Request $request) use ($cronSecret) {
                 $cronSecret($request);
 
-                \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+                Artisan::call('migrate', ['--force' => true]);
 
                 return response()->json([
-                    'ok'     => true,
-                    'output' => trim(\Illuminate\Support\Facades\Artisan::output()),
+                    'ok' => true,
+                    'output' => trim(Artisan::output()),
                 ]);
             })->name('cron.migrate');
 
-            Route::get('cron/import-datos', function (\Illuminate\Http\Request $request) use ($cronSecret) {
+            Route::get('cron/prune', function (Request $request) use ($cronSecret) {
+                $cronSecret($request);
+
+                Artisan::call('app:prune-ephemeral');
+
+                return response()->json([
+                    'ok' => true,
+                    'output' => trim(Artisan::output()),
+                ]);
+            })->name('cron.prune');
+
+            Route::get('cron/import-datos', function (Request $request) use ($cronSecret) {
                 $cronSecret($request);
 
                 $path = database_path('data/datos_asistencias.php');
@@ -57,7 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $sql = require $path;
                 abort_unless(is_string($sql) && trim($sql) !== '', 500, 'Archivo de datos invalido.');
 
-                $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
+                $pdo = DB::connection()->getPdo();
                 $pdo->exec('SET NAMES utf8mb4');
 
                 $ejecutadas = 0;
@@ -68,14 +84,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 $conteos = [];
                 foreach (['users', 'roles', 'permisos', 'horarios', 'salones', 'asistencias'] as $tabla) {
-                    $conteos[$tabla] = (int) \Illuminate\Support\Facades\DB::table($tabla)->count();
+                    $conteos[$tabla] = (int) DB::table($tabla)->count();
                 }
 
                 return response()->json([
-                    'ok'               => true,
-                    'sentencias'       => $ejecutadas,
-                    'conteos'          => $conteos,
-                    'muestra'          => \Illuminate\Support\Facades\DB::table('users')
+                    'ok' => true,
+                    'sentencias' => $ejecutadas,
+                    'conteos' => $conteos,
+                    'muestra' => DB::table('users')
                         ->where('nombre', 'like', '%Jos%')
                         ->limit(3)
                         ->get(['nombre', 'apellido', 'nombre_completo']),
@@ -91,7 +107,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(RegistrarAccesoDenegado::class);
         $middleware->web(append: [
             DocenteSessionTimeout::class,
-            \App\Http\Middleware\VerificarEstatusActivo::class,
+            VerificarEstatusActivo::class,
             SesionAbsoluta::class,
         ]);
         $middleware->alias([
@@ -101,14 +117,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->reportable(function (\Throwable $e) {
+        $exceptions->reportable(function (Throwable $e) {
             Log::error($e->getMessage(), [
                 'exception' => $e,
-                'url'       => request()->url(),
-                'user_id'   => auth()->id(),
+                'url' => request()->url(),
+                'user_id' => auth()->id(),
             ]);
         });
-        $exceptions->renderable(function (\Illuminate\Session\TokenMismatchException $e) {
+        $exceptions->renderable(function (TokenMismatchException $e) {
             return redirect()->route('login')
                 ->with('error', 'La sesión ha expirado. Por favor, inicia sesión nuevamente.');
         });
